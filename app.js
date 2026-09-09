@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -296,6 +296,7 @@ function saveNewProband() {
   if (!sRaw)   { showToast('⚠ Sensoriknummer eingeben'); return; }
   const sensor = parseInt(sRaw, 10);
   if (isNaN(sensor) || sensor < 1 || sensor > 12) { showToast('⚠ Sensoriknummer 1–12'); return; }
+  if (handedness !== 'Rechts' && handedness !== 'Links') { showToast('⚠ Händigkeit wählen'); return; }
   if (probanden.some(p => String(p.sensor) === String(sensor))) { showToast('⚠ SNR ' + sensor + ' vergeben'); return; }
   if (probanden.some(p => p.pseudo.toLowerCase() === pseudo.toLowerCase())) { showToast('⚠ Pseudonym vergeben'); return; }
   const nowISO = new Date().toISOString();
@@ -355,6 +356,7 @@ document.getElementById('btn-save-proband-edit').addEventListener('click', () =>
   if (!sRaw)   { showToast('⚠ Sensoriknummer eingeben'); return; }
   const sensor = parseInt(sRaw, 10);
   if (isNaN(sensor) || sensor < 1 || sensor > 12) { showToast('⚠ Sensoriknummer 1–12'); return; }
+  if (handedness !== 'Rechts' && handedness !== 'Links') { showToast('⚠ Händigkeit wählen'); return; }
   if (probanden.some((p,i) => i !== idx && String(p.sensor) === String(sensor))) { showToast('⚠ SNR vergeben'); return; }
   if (probanden.some((p,i) => i !== idx && p.pseudo.toLowerCase() === pseudo.toLowerCase())) { showToast('⚠ Pseudonym vergeben'); return; }
   const baseAn = probanden[idx].sensorAngelegtISO || probanden[idx].createdAt || new Date().toISOString();

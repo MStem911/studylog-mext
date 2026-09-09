@@ -51,7 +51,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <span class="app-version">v2.8.0</span>
+      <span class="app-version">v2.8.1</span>
       <span class="lock-icon">🔒</span>
     </div>
   </aside>
@@ -69,7 +69,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <span class="app-version">v2.8.0</span>
+        <span class="app-version">v2.8.1</span>
         <span class="lock-icon">🔒</span>
       </div>
     </header>
@@ -95,7 +95,7 @@
               <div>
                 <label class="field-label" for="inp-pseudo">Pseudonym</label>
                 <input type="text" id="inp-pseudo" placeholder="z.B. P1234ABC" autocomplete="off" autocorrect="off" autocapitalize="characters">
-                <div class="field-error hidden" id="inp-pseudo-error">Format nicht korrekt</div>
+                <div class="field-error hidden" id="inp-pseudo-error">Format nicht korrekt – erwartet: 1 Buchstabe, 4 Zahlen, 3 Buchstaben (z.B. P1234ABC)</div>
               </div>
               <div>
                 <label class="field-label" for="inp-sensor">Sensoriknummer (1–12)</label>
@@ -104,7 +104,7 @@
               <div>
                 <label class="field-label" for="inp-handedness">Händigkeit</label>
                 <select id="inp-handedness" class="field-select">
-                  <option value="">– keine Angabe –</option>
+                  <option value="" disabled selected>– bitte wählen –</option>
                   <option value="Rechts">Rechts</option>
                   <option value="Links">Links</option>
                 </select>
@@ -486,7 +486,7 @@
           <div>
             <label class="field-label" for="edit-pseudo">Pseudonym</label>
             <input type="text" id="edit-pseudo" autocomplete="off" autocorrect="off" autocapitalize="characters">
-            <div class="field-error hidden" id="edit-pseudo-error">Format nicht korrekt</div>
+            <div class="field-error hidden" id="edit-pseudo-error">Format nicht korrekt – erwartet: 1 Buchstabe, 4 Zahlen, 3 Buchstaben (z.B. P1234ABC)</div>
           </div>
           <div>
             <label class="field-label" for="edit-sensor">Sensoriknummer (1–12)</label>
@@ -497,7 +497,7 @@
         <input type="text" id="edit-note" autocorrect="off">
         <label class="field-label" for="edit-handedness">Händigkeit</label>
         <select id="edit-handedness" class="field-select">
-          <option value="">– keine Angabe –</option>
+          <option value="" disabled selected>– bitte wählen –</option>
           <option value="Rechts">Rechts</option>
           <option value="Links">Links</option>
         </select>

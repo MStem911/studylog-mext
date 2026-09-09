@@ -71,7 +71,7 @@ Schema-Versionierung** von `localStorage`-Daten; neue Felder müssen daher stets
 
 | Key | State-Variable | Datensatz-Form (wichtigste Felder) |
 |---|---|---|
-| `sl_probanden` | `probanden` | `{ id, pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO, createdAt }` — `handedness`: `''` \| `'Rechts'` \| `'Links'` (Alt-Daten: Feld fehlt → wie `''` behandeln) |
+| `sl_probanden` | `probanden` | `{ id, pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO, createdAt }` — `handedness`: `'Rechts'` \| `'Links'` — Pflichtfeld beim Anlegen/Bearbeiten (Formular erzwingt eine Auswahl). Alt-Daten ohne Feld gelten als leer und müssen beim nächsten Bearbeiten gesetzt werden |
 | `sl_sessions` | `sessions` | `{ id, probandId, pseudo, sensor, scenarioId, scenarioName, scenarioAbbr, date, startISO, endISO, duration_s, pauses[], pauseCount, pauseDuration_s, deviations[], notes, deviceLabel, createdAt, editedAt? }` |
 | `sl_bewertungen` | `bewertungen` | `{ id, sessionId, pseudo, sensor, scenarioId, scenarioName, scenarioAbbr, date, scores: { a1..z20 }, notes, savedAt }` |
 | `sl_scenarios` | `scenarios` | `{ id, name, abbr, icon }` — Default: VR Welt / Verkehrsunfall / Krankenhaus |
