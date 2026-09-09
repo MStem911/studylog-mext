@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.7.2';
+const APP_VERSION = '2.8.0';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -260,7 +260,7 @@ function renderProbanden(filter = '') {
       <div class="avatar">${esc(initials)}</div>
       <div class="proband-info">
         <div class="proband-name">${esc(p.pseudo)}</div>
-        <div class="proband-sub">SNR: ${esc(p.sensor)}${p.note ? '  ·  ' + esc(p.note) : ''}${sensTimes}</div>
+        <div class="proband-sub">SNR: ${esc(p.sensor)}${p.handedness ? '  ·  Hand: ' + esc(p.handedness) : ''}${p.note ? '  ·  ' + esc(p.note) : ''}${sensTimes}</div>
       </div>
       <span class="badge badge-count">${done} Sitzung${done !== 1 ? 'en' : ''}</span>
     </button>`;
@@ -288,6 +288,7 @@ function saveNewProband() {
   const pseudo = document.getElementById('inp-pseudo').value.trim();
   const sRaw   = document.getElementById('inp-sensor').value.trim();
   const note   = document.getElementById('inp-note').value.trim();
+  const handedness = document.getElementById('inp-handedness').value;
   const anRaw  = document.getElementById('inp-sensor-an').value;
   const abRaw  = document.getElementById('inp-sensor-ab').value;
   if (!pseudo) { showToast('⚠ Pseudonym eingeben'); return; }
@@ -300,7 +301,7 @@ function saveNewProband() {
   const nowISO = new Date().toISOString();
   const sensorAngelegtISO = anRaw ? rebuildISO(nowISO, anRaw) : null;
   const sensorAbgelegtISO = abRaw ? rebuildISO(nowISO, abRaw) : null;
-  probanden.push({ id: uid(), pseudo, sensor, note, sensorAngelegtISO, sensorAbgelegtISO, createdAt: nowISO });
+  probanden.push({ id: uid(), pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO, createdAt: nowISO });
   save();
   clearAddForm();
   document.getElementById('add-form').classList.add('hidden');
@@ -308,7 +309,7 @@ function saveNewProband() {
   showToast('✓ ' + pseudo + ' angelegt');
 }
 function clearAddForm() {
-  ['inp-pseudo','inp-sensor','inp-note','inp-sensor-an','inp-sensor-ab'].forEach(id => { document.getElementById(id).value = ''; });
+  ['inp-pseudo','inp-sensor','inp-note','inp-handedness','inp-sensor-an','inp-sensor-ab'].forEach(id => { document.getElementById(id).value = ''; });
   setPseudoFieldValidity('inp-pseudo', 'inp-pseudo-error');
 }
 
@@ -320,6 +321,7 @@ function openProbandEdit(id) {
   document.getElementById('edit-pseudo').value = p.pseudo;
   document.getElementById('edit-sensor').value = p.sensor;
   document.getElementById('edit-note').value   = p.note || '';
+  document.getElementById('edit-handedness').value = p.handedness || '';
   document.getElementById('edit-sensor-an').value = isoToTimeInput(p.sensorAngelegtISO);
   document.getElementById('edit-sensor-ab').value = isoToTimeInput(p.sensorAbgelegtISO);
   setPseudoFieldValidity('edit-pseudo', 'edit-pseudo-error');
@@ -345,6 +347,7 @@ document.getElementById('btn-save-proband-edit').addEventListener('click', () =>
   const pseudo = document.getElementById('edit-pseudo').value.trim();
   const sRaw   = document.getElementById('edit-sensor').value.trim();
   const note   = document.getElementById('edit-note').value.trim();
+  const handedness = document.getElementById('edit-handedness').value;
   const anRaw  = document.getElementById('edit-sensor-an').value;
   const abRaw  = document.getElementById('edit-sensor-ab').value;
   if (!pseudo) { showToast('⚠ Pseudonym eingeben'); return; }
@@ -358,7 +361,7 @@ document.getElementById('btn-save-proband-edit').addEventListener('click', () =>
   const baseAb = probanden[idx].sensorAbgelegtISO || probanden[idx].createdAt || new Date().toISOString();
   const sensorAngelegtISO = anRaw ? rebuildISO(baseAn, anRaw) : null;
   const sensorAbgelegtISO = abRaw ? rebuildISO(baseAb, abRaw) : null;
-  probanden[idx] = { ...probanden[idx], pseudo, sensor, note, sensorAngelegtISO, sensorAbgelegtISO };
+  probanden[idx] = { ...probanden[idx], pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO };
   sessions = sessions.map(s => s.probandId === editingProbandId ? { ...s, pseudo, sensor } : s);
   save();
   closeProbandEdit();

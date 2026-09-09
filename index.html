@@ -51,7 +51,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <span class="app-version">v2.7.2</span>
+      <span class="app-version">v2.8.0</span>
       <span class="lock-icon">🔒</span>
     </div>
   </aside>
@@ -69,7 +69,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <span class="app-version">v2.7.2</span>
+        <span class="app-version">v2.8.0</span>
         <span class="lock-icon">🔒</span>
       </div>
     </header>
@@ -100,6 +100,14 @@
               <div>
                 <label class="field-label" for="inp-sensor">Sensoriknummer (1–12)</label>
                 <input type="number" id="inp-sensor" placeholder="z.B. 7" min="1" max="12" inputmode="numeric">
+              </div>
+              <div>
+                <label class="field-label" for="inp-handedness">Händigkeit</label>
+                <select id="inp-handedness" class="field-select">
+                  <option value="">– keine Angabe –</option>
+                  <option value="Rechts">Rechts</option>
+                  <option value="Links">Links</option>
+                </select>
               </div>
               <div class="form-grid-full">
                 <label class="field-label" for="inp-note">Notiz (optional)</label>
@@ -487,6 +495,12 @@
         </div>
         <label class="field-label" for="edit-note">Notiz (optional)</label>
         <input type="text" id="edit-note" autocorrect="off">
+        <label class="field-label" for="edit-handedness">Händigkeit</label>
+        <select id="edit-handedness" class="field-select">
+          <option value="">– keine Angabe –</option>
+          <option value="Rechts">Rechts</option>
+          <option value="Links">Links</option>
+        </select>
         <div class="edit-row-2">
           <div>
             <label class="field-label" for="edit-sensor-an">Sensorik angelegt</label>

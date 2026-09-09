@@ -38,10 +38,12 @@ auf Tablet/Desktop):
    Feld sofort rot markiert mit dem Hinweis "Format nicht korrekt" darunter; Anlegen ist erst
    möglich, wenn das Format stimmt.
 3. **Sensoriknummer** (1–12) der zugewiesenen Sensor-Einheit eingeben.
-4. Optional: Notiz eintragen (z. B. "Linkshänder").
-5. Optional: Uhrzeit "Sensorik angelegt" erfassen — per Tastatur oder Knopf "🕐 Jetzt" für
+4. Optional: **Händigkeit** wählen ("Rechts" / "Links" / keine Angabe) — relevant für die
+   Sensorplatzierung.
+5. Optional: Notiz eintragen.
+6. Optional: Uhrzeit "Sensorik angelegt" erfassen — per Tastatur oder Knopf "🕐 Jetzt" für
    die aktuelle Uhrzeit.
-6. Mit **✓ Anlegen** speichern.
+7. Mit **✓ Anlegen** speichern.
 
 ### 2. Sitzung durchführen
 
