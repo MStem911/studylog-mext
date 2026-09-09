@@ -32,6 +32,7 @@ flowchart LR
         I4["Abweichungs-Tags + Freitextnotizen<br/>pro Sitzung"]
         I5["Trainerbewertungsbogen<br/>(19 Skalenwerte 1–6 + Freitext)"]
         I6["Geräte-/Betreuungslabel (Freitext)"]
+        I7["Sensorik-Checkliste: pro Item (Shimmer ECG,<br/>Shimmer GSR+, Polar Brustgurt, Garmin)<br/>Zeitstempel 'angelegt' (Gerätezeit)"]
     end
 
     subgraph Process["Verarbeitung — client-seitig, im Browser (app.js)"]
@@ -56,7 +57,7 @@ flowchart LR
         D4["Browser-/App-Daten löschen<br/>oder App deinstallieren (außerhalb der App)"]
     end
 
-    I1 & I2 & I3 & I4 & I5 & I6 --> P1
+    I1 & I2 & I3 & I4 & I5 & I6 & I7 --> P1
     P1 <--> S1
     P1 --> T1 --> T3
     P1 --> T2 --> T3
@@ -83,8 +84,8 @@ organisatorisch (nicht technisch) geregelt und für die DSFA dokumentiert werden
 
 ## Datentypen im Detail
 
-Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_probanden`,
-`sl_sessions`, `sl_settings`, `sl_scenarios`, `sl_tags`, `sl_bewertungen`).
+Gespeichert wird in sieben getrennten `localStorage`-Einträgen (Keys `sl_probanden`,
+`sl_sessions`, `sl_settings`, `sl_scenarios`, `sl_tags`, `sl_bewertungen`, `sl_sensorik`).
 
 | Datentyp | Felder (Auszug) | Zweck | Rechtsgrundlage | Speicherort | Aufbewahrungsdauer | Verantwortlichkeit |
 |---|---|---|---|---|---|---|
@@ -92,6 +93,7 @@ Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_proband
 | **Sitzungsprotokolle** (`sl_sessions`) | Verweis auf Teilnehmende:n (Pseudonym+Sensoriknummer als Kopie), gewähltes Szenario, Start-/Endzeitpunkt (ISO 8601), aktive Dauer, Pausen (je Start-/Endzeitpunkt + Dauer, beliebig oft pro Sitzung), Abweichungs-Tags, Freitextnotizen, Gerätelabel | Nachvollziehbarkeit des Sitzungsablaufs inkl. Unterbrechungen, Basis für Auswertung/Export | TODO: Datenschutz prüfen | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Trainerbewertungsbogen** (`sl_bewertungen`) | Verweis auf Sitzung, 19 Skalenwerte (Schulnoten-Skala 1–6) zu Leistungsdimensionen (u. a. Lageerkundung, Entscheidungsqualität, Führung/Kommunikation, MANV-Erkennung), Freitextanmerkungen | Strukturierte Leistungsbewertung der Teilnehmenden im Szenario | TODO: Datenschutz prüfen — Bewertungsdaten zu einer identifizierbaren (wenn auch pseudonymisierten) Person können besonders schutzwürdig sein | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Sensorik-Zeiten** (Teil von `sl_probanden`) | Uhrzeit "Sensorik angelegt" / "Sensorik abgelegt" (manuell erfasst, **keine** Rohsensordaten) | Dokumentation des Sensorhandlings im Studienablauf | TODO: Datenschutz prüfen | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung | Jeweilige Studienleitung / Gerätebesitzer:in |
+| **Sensorik-Checkliste** (`sl_sensorik`) | Feste Item-Liste (Shimmer ECG, Shimmer GSR+, Polar Brustgurt, Garmin); pro Item ein Zeitstempel "angelegt am" (ISO 8601, Gerätezeit) oder leer. **Keine** Rohsensordaten, **kein** direkter Personenbezug im Datensatz (globale Checkliste, nicht pro Teilnehmende:r gespeichert) | Dokumentation, wann welche Sensorik im Ablauf angelegt wurde | TODO: Datenschutz prüfen — mittelbarer Personenbezug über zeitliche Korrelation mit Sitzungen möglich | `localStorage`, lokal | Zeitstempel bis manuelle Löschung (Item-Reset im Tab oder "Alle Daten löschen"); Item-Liste dauerhaft | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Szenario- & Tag-Konfiguration** (`sl_scenarios`, `sl_tags`) | Name/Abkürzung/Icon der Szenarien, Liste möglicher Abweichungs-Tags | App-Konfiguration, keine Personenbezug | Nicht personenbezogen | `localStorage`, lokal | Unbegrenzt (wird von "Alle Daten löschen" **nicht** erfasst) | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Einstellungen** (`sl_settings`) | Geräte-/Betreuungslabel (Freitext), Zeitpunkt letzter Export, Ein/Aus-Schalter "Mehrere Teilnehmende gleichzeitig" (`multiProband`) | App-Konfiguration und Exportnachweis | Nicht personenbezogen (kann ggf. Namen enthalten, falls Studienleitung sich selbst dort einträgt) | `localStorage`, lokal | Unbegrenzt (wird von "Alle Daten löschen" **nicht** erfasst) | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Export-Dateien** (CSV/JSON) | Kombination aller obigen personenbezogenen Felder inkl. Bewertungswerte | Zusammenführung/Auswertung mehrerer Geräte nach Studienabschluss | TODO: Datenschutz prüfen | Dateisystem des Geräts (Download-Ordner), danach außerhalb der App-Kontrolle | Unbestimmt — liegt außerhalb der App | TODO: Datenschutz prüfen — vermutlich Studienleitung/Institution |
@@ -108,11 +110,16 @@ Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_proband
   Bewertungsbogen-Einträge in `sl_bewertungen` werden dabei **nicht** automatisch mitgelöscht
   (verwaister Verweis über `sessionId` bleibt bestehen). TODO: Datenschutz prüfen.
 - **"Alle Daten löschen" (Einstellungen-Screen):** Leert `sl_probanden`, `sl_sessions` und
-  `sl_bewertungen` sowie den Zeitstempel des letzten Exports vollständig. **Nicht** betroffen
+  `sl_bewertungen` sowie den Zeitstempel des letzten Exports vollständig und setzt alle
+  erfassten Zeitstempel der Sensorik-Checkliste (`sl_sensorik[].checkedAt`) auf `null`
+  zurück (die Item-Liste selbst bleibt). **Nicht** betroffen
   sind die Szenario-Konfiguration (`sl_scenarios`), die Tag-Liste (`sl_tags`) und das
   Geräte-/Betreuungslabel sowie der Schalter "Mehrere Teilnehmende gleichzeitig"
   (`sl_settings.deviceLabel`/`sl_settings.multiProband`) — diese gelten als reine
   App-Konfiguration ohne Personenbezug.
+- **"Zurücksetzen" im Tab Sensorik:** Setzt alle `checkedAt`-Zeitstempel der Checkliste auf
+  `null` (nach Sicherheitsabfrage), damit die Liste für den nächsten Durchlauf leer ist. Die
+  Item-Liste bleibt unverändert.
 - **Kein automatischer Ablauf/keine Aufbewahrungsfrist:** Die App löscht nichts von selbst.
   Daten bleiben im `localStorage` des Browsers bestehen, bis eine der obigen Aktionen manuell
   ausgeführt wird, oder bis Nutzer:innen außerhalb der App Browserdaten löschen bzw. die App

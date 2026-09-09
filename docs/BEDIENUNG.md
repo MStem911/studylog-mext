@@ -16,12 +16,13 @@
 
 ## Kernfunktionen im Überblick
 
-Die App hat sechs Bereiche, erreichbar über die Navigation (unten auf dem Smartphone, links
+Die App hat sieben Bereiche, erreichbar über die Navigation (unten auf dem Smartphone, links
 auf Tablet/Desktop):
 
 | Bereich | Zweck |
 |---|---|
 | 👤 **Teilnehmende** | Personen mit Pseudonym + Sensoriknummer anlegen und verwalten |
+| 🩹 **Sensorik** | Checkliste der Sensorik-Hardware; pro Item wird beim Abhaken automatisch der Anlege-Zeitpunkt erfasst |
 | ⏺ **Sitzung** | Timer starten/stoppen, Szenario wählen, Abweichungen/Notizen erfassen |
 | ☰ **Protokoll** | Übersicht aller gespeicherten Sitzungen, filtern, bearbeiten, löschen |
 | 📝 **Bewertung** | Trainerbewertungsbogen zu einer Sitzung ausfüllen |
@@ -43,10 +44,24 @@ auf Tablet/Desktop):
 5. Optional: Notiz eintragen (z. B. "Brille").
 6. Mit **✓ Anlegen** speichern.
 
-Die Uhrzeiten "Sensorik angelegt" / "Sensorik abgelegt" werden **nicht** beim Anlegen erfasst,
-sondern nachträglich über **Person bearbeiten** (Tippen auf eine bereits angelegte Person).
+Die Uhrzeiten "Sensorik angelegt" / "Sensorik abgelegt" (am Teilnehmenden-Datensatz) werden
+**nicht** beim Anlegen erfasst, sondern nachträglich über **Person bearbeiten** (Tippen auf
+eine bereits angelegte Person). Davon unabhängig ist die geräteweite **Sensorik-Checkliste**
+im gleichnamigen Tab (siehe nächster Abschnitt).
 
-### 2. Sitzung durchführen
+### 2. Sensorik anlegen und abhaken
+
+1. In den Bereich **🩹 Sensorik** wechseln. Die Checkliste enthält feste Items:
+   Shimmer ECG, Shimmer GSR+, Polar Brustgurt, Garmin.
+2. Sobald eine Sensorik-Einheit angelegt ist, das entsprechende Item **antippen** — der
+   aktuelle Zeitpunkt (Datum + Uhrzeit, Gerätezeit) wird automatisch erfasst, gespeichert
+   und unter dem Item angezeigt.
+3. Versehentlich abgehakt? Item erneut antippen und die Sicherheitsabfrage bestätigen — die
+   Erfassung wird entfernt.
+4. Vor einem neuen Durchlauf mit **↺ Zurücksetzen** (oben rechts) alle erfassten Zeitpunkte
+   auf einmal löschen. Die Checkliste ist geräteweit (nicht pro Teilnehmende:r).
+
+### 3. Sitzung durchführen
 
 1. Im Bereich **Sitzung**: gewünschte Person im Dropdown auswählen. Ist unter
    **⚙ Einstellungen** die Option "Mehrere Teilnehmende gleichzeitig" aktiviert, erscheint
@@ -67,7 +82,7 @@ sondern nachträglich über **Person bearbeiten** (Tippen auf eine bereits angel
    eintragen.
 7. Mit **💾 Sitzung speichern** abschließen.
 8. Die App fragt danach, ob direkt der **Trainerbewertungsbogen** ausgefüllt werden soll
-   (siehe Schritt 3) — kann auch später über den Bereich **Bewertung** nachgeholt werden.
+   (siehe Schritt 4) — kann auch später über den Bereich **Bewertung** nachgeholt werden.
    War nur eine Person ausgewählt, bezieht sich der Bogen auf diese eine Sitzung. Wurden
    mehrere Personen gleichzeitig ausgewählt, schlägt die App vor, alle gemeinsam in **einem**
    Bewertungsbogen zu bewerten (die eingetragenen Noten/Anmerkungen werden dann identisch in
@@ -78,7 +93,7 @@ sondern nachträglich über **Person bearbeiten** (Tippen auf eine bereits angel
 fragt die App zur Sicherheit nach ("Aufzeichnung verwerfen?"), bevor die noch nicht
 gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
 
-### 3. Trainerbewertungsbogen ausfüllen (optional, pro Sitzung)
+### 4. Trainerbewertungsbogen ausfüllen (optional, pro Sitzung)
 
 1. Im Bereich **Bewertung** die gewünschte Sitzung im Dropdown auswählen (bereits bewertete
    Sitzungen sind mit ✓ markiert). Ist unter **⚙ Einstellungen** die Option "Mehrere
@@ -97,7 +112,7 @@ gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
    nach ("Trotzdem speichern?" / "Abbrechen") — so bleibt die unvollständige Bewertung nicht
    versehentlich als vermeintlich fertig stehen.
 
-### 4. Sitzung im Protokoll prüfen oder korrigieren
+### 5. Sitzung im Protokoll prüfen oder korrigieren
 
 1. Im Bereich **Protokoll** die Liste aller Sitzungen einsehen, bei Bedarf nach Szenario
    oder Person filtern.
@@ -106,7 +121,7 @@ gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
    Notizen nachträglich korrigieren (das Datum selbst ist nicht änderbar).
 4. Über **Sitzung löschen** kann ein fehlerhafter Eintrag entfernt werden.
 
-### 5. Am Ende der Erhebung: Export
+### 6. Am Ende der Erhebung: Export
 
 1. Im Bereich **Export** optional ein **Geräte-/Betreuungslabel** eintragen (hilfreich, wenn
    mehrere Geräte parallel genutzt wurden).

@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.8.2';
+const APP_VERSION = '2.9.0';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -14,11 +14,22 @@ const KEY_SETTINGS   = 'sl_settings';
 const KEY_SCENARIOS  = 'sl_scenarios';
 const KEY_TAGS       = 'sl_tags';
 const KEY_BEWERTUNGEN = 'sl_bewertungen';
+const KEY_SENSORIK   = 'sl_sensorik';
 
 const DEFAULT_SCENARIOS = [
   { id: 'sc_vr', name: 'Szenario VR Welt',       abbr: 'VR', icon: '🥽' },
   { id: 'sc_vu', name: 'Szenario Verkehrsunfall', abbr: 'VU', icon: '🚗' },
   { id: 'sc_kh', name: 'Szenario Krankenhaus',    abbr: 'KH', icon: '🏥' },
+];
+
+// Sensorik-Checkliste (Tab "Sensorik"): feste Item-Liste, jedes Item bekommt beim Abhaken
+// einen Zeitstempel (checkedAt = ISO-String) "wann angelegt". Analog zu DEFAULT_TAGS eine
+// Konfigurations-Default-Liste; der erfasste Zeitpunkt ist Laufdaten.
+const DEFAULT_SENSORIK = [
+  { id: 'se_ecg',    label: 'Shimmer ECG',     checkedAt: null },
+  { id: 'se_gsr',    label: 'Shimmer GSR+',    checkedAt: null },
+  { id: 'se_polar',  label: 'Polar Brustgurt', checkedAt: null },
+  { id: 'se_garmin', label: 'Garmin',          checkedAt: null },
 ];
 
 const DEFAULT_TAGS = [
@@ -37,6 +48,7 @@ let settings         = { deviceLabel: '', lastExport: null, multiProband: false 
 let scenarios        = [];
 let tags             = [];
 let bewertungen      = [];
+let sensorik         = [];
 let selectedScenId   = '';
 let selectedProbandIds = [];
 let selectedBewSessionIds = [];
@@ -64,6 +76,7 @@ function save() {
     localStorage.setItem(KEY_SCENARIOS,   JSON.stringify(scenarios));
     localStorage.setItem(KEY_TAGS,        JSON.stringify(tags));
     localStorage.setItem(KEY_BEWERTUNGEN, JSON.stringify(bewertungen));
+    localStorage.setItem(KEY_SENSORIK,    JSON.stringify(sensorik));
   } catch(e) { showToast('⚠ Speicherfehler'); }
 }
 
@@ -75,6 +88,7 @@ function load() {
     const sc = localStorage.getItem(KEY_SCENARIOS);
     const tg = localStorage.getItem(KEY_TAGS);
     const bw = localStorage.getItem(KEY_BEWERTUNGEN);
+    const sn = localStorage.getItem(KEY_SENSORIK);
     if (p)  probanden   = JSON.parse(p);
     if (s)  sessions    = JSON.parse(s);
     if (st) settings    = { ...settings, ...JSON.parse(st) };
@@ -83,9 +97,17 @@ function load() {
     if (!scenarios.length) scenarios = deepCopy(DEFAULT_SCENARIOS);
     tags = tg ? JSON.parse(tg) : [...DEFAULT_TAGS];
     if (!tags.length) tags = [...DEFAULT_TAGS];
+    sensorik = sn ? JSON.parse(sn) : deepCopy(DEFAULT_SENSORIK);
+    if (!sensorik.length) sensorik = deepCopy(DEFAULT_SENSORIK);
+    // Fehlende Default-Items ergänzen (falls die Liste später erweitert wird), ohne
+    // bereits erfasste Zeitstempel zu verlieren.
+    DEFAULT_SENSORIK.forEach(def => {
+      if (!sensorik.some(i => i.id === def.id)) sensorik.push({ ...def });
+    });
   } catch(e) {
     scenarios = deepCopy(DEFAULT_SCENARIOS);
     tags = [...DEFAULT_TAGS];
+    sensorik = deepCopy(DEFAULT_SENSORIK);
   }
 }
 
@@ -183,6 +205,7 @@ document.getElementById('confirm-cancel').addEventListener('click', () => {
 // ── Navigation ────────────────────────────────────────────────────────────────
 const PAGE_TITLES = {
   probanden: 'Teilnehmende',
+  sensorik:  'Sensorik',
   session:   'Sitzung aufzeichnen',
   log:       'Protokoll',
   bewertung: 'Trainerbewertungsbogen',
@@ -205,6 +228,7 @@ function showScreen(name) {
   const titleEl = document.getElementById('page-title');
   if (titleEl) titleEl.textContent = PAGE_TITLES[name] || 'StudyLog';
 
+  if (name === 'sensorik')  renderSensorik();
   if (name === 'session')   renderSessionScreen();
   if (name === 'log')       renderLog();
   if (name === 'export')    renderExport();
@@ -504,6 +528,49 @@ function renderTagRow(containerId, selectedTags = []) {
 function getActiveTags(containerId) {
   return Array.from(document.querySelectorAll(`#${containerId} .tag.active`)).map(t => t.dataset.tag);
 }
+
+// ── Sensorik-Checkliste ───────────────────────────────────────────────────────
+function renderSensorik() {
+  const list = document.getElementById('sensorik-list');
+  if (!list) return;
+  list.innerHTML = sensorik.map(item => {
+    const done = !!item.checkedAt;
+    const timeStr = done ? localDatetimeStr(item.checkedAt) : 'noch nicht angelegt';
+    return `<button class="sensorik-item${done ? ' checked' : ''}" data-id="${esc(item.id)}">
+      <span class="sensorik-check">${done ? '✓' : ''}</span>
+      <span class="sensorik-info">
+        <span class="sensorik-name">${esc(item.label)}</span>
+        <span class="sensorik-time">${esc(timeStr)}</span>
+      </span>
+    </button>`;
+  }).join('');
+  list.querySelectorAll('.sensorik-item').forEach(btn =>
+    btn.addEventListener('click', () => toggleSensorik(btn.dataset.id))
+  );
+}
+
+function toggleSensorik(id) {
+  const item = sensorik.find(x => x.id === id);
+  if (!item) return;
+  if (item.checkedAt) {
+    // Erfassung rückgängig machen — Sicherheitsabfrage, da der Zeitstempel verloren geht
+    showConfirm('Erfassung rückgängig machen',
+      `„${item.label}" wurde um ${localTimeStr(item.checkedAt)} als angelegt erfasst. Erfassung wirklich entfernen?`,
+      () => { item.checkedAt = null; save(); renderSensorik(); showToast('Erfassung entfernt'); });
+  } else {
+    item.checkedAt = new Date().toISOString();
+    save();
+    renderSensorik();
+    showToast('✓ ' + item.label + '  ·  ' + localTimeStr(item.checkedAt));
+  }
+}
+
+document.getElementById('btn-reset-sensorik').addEventListener('click', () => {
+  if (!sensorik.some(i => i.checkedAt)) { showToast('Nichts zurückzusetzen'); return; }
+  showConfirm('Checkliste zurücksetzen',
+    'Alle erfassten Sensorik-Zeitpunkte werden entfernt, damit die Checkliste für den nächsten Durchlauf wieder leer ist.',
+    () => { sensorik.forEach(i => i.checkedAt = null); save(); renderSensorik(); showToast('Checkliste zurückgesetzt'); });
+});
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
 function startTimer() {
@@ -1135,11 +1202,12 @@ function recordExport() {
 }
 document.getElementById('btn-clear-data').addEventListener('click', () => {
   showConfirm('⚠ Alle Daten löschen',
-    'Alle Teilnehmenden, Sitzungsdaten und Bewertungen werden unwiderruflich gelöscht. Vorher exportieren!',
+    'Alle Teilnehmenden, Sitzungsdaten, Bewertungen und die erfassten Sensorik-Zeitpunkte werden unwiderruflich gelöscht. Vorher exportieren!',
     () => {
       probanden = []; sessions = []; bewertungen = []; settings.lastExport = null;
       selectedProbandIds = []; selectedBewSessionIds = []; pendingBewertungSessionIds = [];
-      save(); renderProbanden(); renderLog(); renderExport();
+      sensorik.forEach(i => i.checkedAt = null);
+      save(); renderProbanden(); renderLog(); renderExport(); renderSensorik();
       showToast('Alle Daten gelöscht');
     });
 });
@@ -1413,6 +1481,7 @@ function resetBewertungForm() {
 load();
 if (scenarios.length) selectedScenId = scenarios[0].id;
 renderProbanden();
+renderSensorik();
 buildScenarioGrid();
 buildProbandSelect();
 renderTagRow('deviation-tags');

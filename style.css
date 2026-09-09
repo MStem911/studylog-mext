@@ -1048,6 +1048,39 @@ input[type="time"] { color-scheme: dark; }
   .dialog-box::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 }
 
+/* ══════════════════════════════════════════════════════
+   SENSORIK-CHECKLISTE
+══════════════════════════════════════════════════════ */
+.sensorik-list { display: flex; flex-direction: column; gap: 8px; }
+
+.sensorik-item {
+  width: 100%;
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.12s, border-color 0.12s;
+  text-align: left; font-family: inherit; font-size: inherit; color: inherit;
+  user-select: none;
+}
+.sensorik-item:hover  { background: var(--surface2); border-color: var(--border2); }
+.sensorik-item:active { background: var(--surface2); }
+.sensorik-item.checked { background: var(--teal-bg); border-color: var(--teal); }
+
+.sensorik-check {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-md); font-weight: 700; color: #fff;
+}
+.sensorik-item.checked .sensorik-check { background: var(--teal); border-color: var(--teal); }
+
+.sensorik-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sensorik-name { font-size: var(--text-md); font-weight: 700; color: var(--text1); }
+.sensorik-time { font-size: var(--text-sm); color: var(--text2); }
+.sensorik-item.checked .sensorik-time { color: var(--teal-txt); }
+
 /* Keyboard focus styles for accessibility */
 :focus-visible {
   outline: 2px solid var(--purple);

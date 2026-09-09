@@ -49,10 +49,12 @@ bleiben dabei ausschließlich auf dem jeweiligen Gerät.
 | Sprache der Oberfläche | Deutsch |
 
 **Wichtiger Hinweis zu "Sensorik":** Die App liest keine Sensor-/Messdaten (z. B. Eyetracking,
-Bewegungsdaten) aus. "Sensoriknummer" und die Felder "Sensorik angelegt/abgelegt" sind
-**manuell durch die Studienleitung erfasste Metadaten** (welche nummerierte Sensor-Hardware-Einheit
-einer Person zugeordnet wurde, und wann sie an-/abgelegt wurde) — nicht die Rohdaten des Sensors
-selbst. Details siehe [DATENFLUSS.md](./DATENFLUSS.md).
+Bewegungsdaten) aus. "Sensoriknummer", die Felder "Sensorik angelegt/abgelegt" und die
+Checkliste im Tab **Sensorik** (Items Shimmer ECG / Shimmer GSR+ / Polar Brustgurt / Garmin
+mit jeweiligem Anlege-Zeitpunkt) sind **manuell durch die Studienleitung erfasste Metadaten**
+(welche nummerierte Sensor-Hardware-Einheit einer Person zugeordnet wurde, und wann welche
+Sensorik an-/abgelegt wurde) — nicht die Rohdaten des Sensors selbst. Details siehe
+[DATENFLUSS.md](./DATENFLUSS.md).
 
 ## Architekturübersicht (High-Level)
 
@@ -60,7 +62,7 @@ selbst. Details siehe [DATENFLUSS.md](./DATENFLUSS.md).
 flowchart TB
     subgraph Device["Gerät der Studienleitung (Smartphone/Tablet/Desktop)"]
         direction TB
-        UI["index.html + style.css<br/>(UI-Schicht: 6 Screens, Overlays/Dialoge)"]
+        UI["index.html + style.css<br/>(UI-Schicht: 7 Screens, Overlays/Dialoge)"]
         Logic["app.js<br/>(Anwendungslogik, In-Memory-State,<br/>Rendering, Validierung)"]
         LS[("localStorage<br/>(persistenter Datenspeicher)")]
         SW["sw.js (Service Worker)<br/>Cache für App-Shell (HTML/CSS/JS/Icons)"]
@@ -87,7 +89,7 @@ einem Gerät wegzubekommen, ist der manuelle CSV/JSON-Export (siehe
 
 | Datei | Rolle |
 |---|---|
-| `index.html` | App-Shell: alle 6 Screens (Teilnehmende, Sitzung, Protokoll, Bewertung, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
+| `index.html` | App-Shell: alle 7 Screens (Teilnehmende, Sensorik, Sitzung, Protokoll, Bewertung, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
 | `style.css` | Dark-Mode-Design, responsives Layout (Sidebar auf Desktop/Tablet, Bottom-Nav auf Mobile) |
 | `app.js` | Gesamte Anwendungslogik: State-Verwaltung, Persistenz (`localStorage`), Rendering aller Screens, Event-Handling, Export |
 | `sw.js` | Service Worker: cached die App-Shell-Dateien für Offline-Nutzung, Cache-Invalidierung über Versionsnummer |

@@ -29,6 +29,10 @@
         <span class="nav-icon">👤</span>
         <span class="nav-label">Teilnehmende</span>
       </button>
+      <button class="nav-item" data-screen="sensorik">
+        <span class="nav-icon">🩹</span>
+        <span class="nav-label">Sensorik</span>
+      </button>
       <button class="nav-item" data-screen="session">
         <span class="nav-icon">⏺</span>
         <span class="nav-label">Sitzung</span>
@@ -51,7 +55,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <span class="app-version">v2.8.2</span>
+      <span class="app-version">v2.9.0</span>
       <span class="lock-icon">🔒</span>
     </div>
   </aside>
@@ -69,7 +73,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <span class="app-version">v2.8.2</span>
+        <span class="app-version">v2.9.0</span>
         <span class="lock-icon">🔒</span>
       </div>
     </header>
@@ -125,6 +129,24 @@
             <div class="empty-icon">👥</div>
             <div class="empty-text">Noch keine Teilnehmenden angelegt</div>
             <div class="empty-sub">Klicke auf + um eine Person hinzuzufügen</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Sensorik ── -->
+      <section class="screen" id="screen-sensorik">
+        <div class="screen-inner">
+          <div class="card">
+            <div class="card-label-row">
+              <span class="card-label" style="margin-bottom:0">SENSORIK-CHECKLISTE</span>
+              <button class="btn-text" id="btn-reset-sensorik">↺ Zurücksetzen</button>
+            </div>
+            <p class="privacy-text" style="color:var(--text2); line-height:1.5; margin-bottom:14px">
+              Auf ein Item tippen, sobald die jeweilige Sensorik angelegt wurde — der Zeitpunkt
+              wird automatisch erfasst und gespeichert. Erneutes Tippen macht die Erfassung
+              rückgängig.
+            </p>
+            <div class="sensorik-list" id="sensorik-list"></div>
           </div>
         </div>
       </section>
@@ -369,6 +391,7 @@
     <!-- Bottom Nav (Mobile only) -->
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="probanden"><span class="nav-icon">👤</span><span class="nav-label">Teilnehmende</span></button>
+      <button class="nav-btn" data-screen="sensorik"><span class="nav-icon">🩹</span><span class="nav-label">Sensorik</span></button>
       <button class="nav-btn" data-screen="session"><span class="nav-icon">⏺</span><span class="nav-label">Sitzung</span></button>
       <button class="nav-btn" data-screen="log"><span class="nav-icon">☰</span><span class="nav-label">Protokoll</span></button>
       <button class="nav-btn" data-screen="bewertung"><span class="nav-icon">📝</span><span class="nav-label">Bewertung</span></button>
