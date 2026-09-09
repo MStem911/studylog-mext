@@ -40,10 +40,11 @@ auf Tablet/Desktop):
 3. **Sensoriknummer** (1–12) der zugewiesenen Sensor-Einheit eingeben.
 4. **Händigkeit** wählen — "Rechts" oder "Links" (Pflichtfeld, relevant für die
    Sensorplatzierung). Ohne Auswahl ist Anlegen/Speichern nicht möglich.
-5. Optional: Notiz eintragen.
-6. Optional: Uhrzeit "Sensorik angelegt" erfassen — per Tastatur oder Knopf "🕐 Jetzt" für
-   die aktuelle Uhrzeit.
-7. Mit **✓ Anlegen** speichern.
+5. Optional: Notiz eintragen (z. B. "Brille").
+6. Mit **✓ Anlegen** speichern.
+
+Die Uhrzeiten "Sensorik angelegt" / "Sensorik abgelegt" werden **nicht** beim Anlegen erfasst,
+sondern nachträglich über **Person bearbeiten** (Tippen auf eine bereits angelegte Person).
 
 ### 2. Sitzung durchführen
 

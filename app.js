@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.8.1';
+const APP_VERSION = '2.8.2';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -289,8 +289,6 @@ function saveNewProband() {
   const sRaw   = document.getElementById('inp-sensor').value.trim();
   const note   = document.getElementById('inp-note').value.trim();
   const handedness = document.getElementById('inp-handedness').value;
-  const anRaw  = document.getElementById('inp-sensor-an').value;
-  const abRaw  = document.getElementById('inp-sensor-ab').value;
   if (!pseudo) { showToast('⚠ Pseudonym eingeben'); return; }
   if (!setPseudoFieldValidity('inp-pseudo', 'inp-pseudo-error')) { showToast('⚠ Format ungültig (z.B. P1234ABC)'); return; }
   if (!sRaw)   { showToast('⚠ Sensoriknummer eingeben'); return; }
@@ -300,9 +298,8 @@ function saveNewProband() {
   if (probanden.some(p => String(p.sensor) === String(sensor))) { showToast('⚠ SNR ' + sensor + ' vergeben'); return; }
   if (probanden.some(p => p.pseudo.toLowerCase() === pseudo.toLowerCase())) { showToast('⚠ Pseudonym vergeben'); return; }
   const nowISO = new Date().toISOString();
-  const sensorAngelegtISO = anRaw ? rebuildISO(nowISO, anRaw) : null;
-  const sensorAbgelegtISO = abRaw ? rebuildISO(nowISO, abRaw) : null;
-  probanden.push({ id: uid(), pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO, createdAt: nowISO });
+  // Sensorik-Zeiten werden beim Anlegen nicht mehr erfasst – nachträglich über "Person bearbeiten".
+  probanden.push({ id: uid(), pseudo, sensor, note, handedness, sensorAngelegtISO: null, sensorAbgelegtISO: null, createdAt: nowISO });
   save();
   clearAddForm();
   document.getElementById('add-form').classList.add('hidden');
@@ -310,7 +307,7 @@ function saveNewProband() {
   showToast('✓ ' + pseudo + ' angelegt');
 }
 function clearAddForm() {
-  ['inp-pseudo','inp-sensor','inp-note','inp-handedness','inp-sensor-an','inp-sensor-ab'].forEach(id => { document.getElementById(id).value = ''; });
+  ['inp-pseudo','inp-sensor','inp-note','inp-handedness'].forEach(id => { document.getElementById(id).value = ''; });
   setPseudoFieldValidity('inp-pseudo', 'inp-pseudo-error');
 }
 
