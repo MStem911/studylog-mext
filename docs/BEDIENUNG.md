@@ -70,7 +70,8 @@ davon unabhängig.
 
 ### 3. Szenario durchführen
 
-1. Im Bereich **Szenario**: gewünschte Person im Dropdown auswählen. Ist unter
+1. Im Bereich **Szenario**: die Person im Dropdown ist bereits vorausgewählt (dieselbe wie
+   zuletzt im Sensorik-Tab bzw. die zuletzt angelegte Person) — bei Bedarf umstellen. Ist unter
    **⚙ Einstellungen** die Option "Mehrere Teilnehmende gleichzeitig" aktiviert, erscheint
    stattdessen eine Liste zum Antippen mehrerer Personen (z. B. wenn ein Szenario von
    mehreren Teilnehmenden gemeinsam durchlaufen wird). Beim Speichern entsteht dann für

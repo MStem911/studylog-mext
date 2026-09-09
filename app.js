@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.11.0';
+const APP_VERSION = '2.11.1';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -452,7 +452,15 @@ function buildProbandSelect() {
   const cur = sel.value;
   sel.innerHTML = '<option value="">— Teilnehmende wählen —</option>' +
     probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}${p.sensor ? '  ·  SNR ' + esc(p.sensor) : ''}</option>`).join('');
-  if (probanden.some(p => p.id === cur)) sel.value = cur;
+  // Vorauswahl: bestehende Auswahl behalten, sonst die aktuell aktive Person
+  // (zuletzt in Sensorik / beim Anlegen gewählt), sonst die zuletzt angelegte Person.
+  if (probanden.some(p => p.id === cur)) {
+    sel.value = cur;
+  } else if (probanden.some(p => p.id === selectedSensorikProbandId)) {
+    sel.value = selectedSensorikProbandId;
+  } else if (probanden.length) {
+    sel.value = probanden[probanden.length - 1].id;
+  }
 
   const multiMode = !!settings.multiProband;
   sel.classList.toggle('hidden', multiMode);
@@ -607,9 +615,14 @@ function toggleSensorik(id) {
     save();
     renderSensorik();
     if (SENSORIK_ITEMS.every(it => p.sensorik[it.id])) {
-      // Gesamte Sensorik für diese Person angelegt → direkt weiter zum Szenario-Tab
+      // Gesamte Sensorik für diese Person angelegt → direkt weiter zum Szenario-Tab,
+      // dort dieselbe Person vorauswählen
       showToast('✓ Sensorik komplett — weiter zu Szenario');
-      setTimeout(() => showScreen('session'), 600);
+      setTimeout(() => {
+        const sessSel = document.getElementById('sel-proband');
+        if (sessSel) sessSel.value = selectedSensorikProbandId;
+        showScreen('session');
+      }, 600);
     } else {
       showToast('✓ ' + item.label + '  ·  ' + localTimeStr(p.sensorik[id]));
     }
