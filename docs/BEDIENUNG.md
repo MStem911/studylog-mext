@@ -22,8 +22,8 @@ auf Tablet/Desktop):
 | Bereich | Zweck |
 |---|---|
 | 👤 **Teilnehmende** | Personen mit Pseudonym + Händigkeit anlegen und verwalten (Sensoriknummer optional, nur im Bearbeiten-Dialog) |
-| 🩹 **Sensorik** | Checkliste der Sensorik-Hardware **pro Teilnehmende:r** (im Dropdown wählbar); pro Item wird beim Abhaken automatisch der Anlege-Zeitpunkt erfasst |
-| ⏺ **Sitzung** | Timer starten/stoppen, Szenario wählen, Abweichungen/Notizen erfassen |
+| 🩹 **Sensorik** | Checkliste der Sensorik-Hardware **pro Teilnehmende:r** (im Dropdown wählbar); pro Item wird beim Abhaken automatisch der Anlege-Zeitpunkt erfasst. Sind alle Items abgehakt, springt die App direkt in den Tab **Szenario** |
+| ⏺ **Szenario** | Timer starten/stoppen, Szenario wählen (Tutorial / Hologate / Rollercoaster), Abweichungen/Notizen erfassen. Speichert je Durchlauf eine „Sitzung" (siehe Protokoll) |
 | ☰ **Protokoll** | Übersicht aller gespeicherten Sitzungen, filtern, bearbeiten, löschen |
 | 📝 **Bewertung** | Trainerbewertungsbogen zu einer Sitzung ausfüllen |
 | ↓ **Export** | Daten als CSV/JSON exportieren, Statistiken einsehen |
@@ -65,16 +65,19 @@ davon unabhängig.
    Erfassung wird entfernt.
 5. Mit **↺ Zurücksetzen** (oben rechts) alle erfassten Zeitpunkte **der ausgewählten Person**
    auf einmal löschen.
+6. Sobald **alle vier Items** für die Person abgehakt sind, wechselt die App automatisch in
+   den Tab **Szenario**.
 
-### 3. Sitzung durchführen
+### 3. Szenario durchführen
 
-1. Im Bereich **Sitzung**: gewünschte Person im Dropdown auswählen. Ist unter
+1. Im Bereich **Szenario**: gewünschte Person im Dropdown auswählen. Ist unter
    **⚙ Einstellungen** die Option "Mehrere Teilnehmende gleichzeitig" aktiviert, erscheint
    stattdessen eine Liste zum Antippen mehrerer Personen (z. B. wenn ein Szenario von
    mehreren Teilnehmenden gemeinsam durchlaufen wird). Beim Speichern entsteht dann für
    jede ausgewählte Person eine eigene, unabhängige Sitzungsaufzeichnung mit identischer
    Start-/Endzeit.
-2. Passendes **Szenario** antippen (z. B. VR Welt, Verkehrsunfall, Krankenhaus).
+2. Passendes **Szenario** antippen (im Auslieferungszustand: Tutorial, Hologate,
+   Rollercoaster — über **⚙ Verwalten** änderbar).
 3. **▶ Start** drücken, sobald das Szenario beginnt — der Timer läuft.
 4. Falls die Sitzung unterbrochen werden muss (z. B. technische Störung, Rückfrage):
    **⏸ Pause** drücken — der Timer friert ein. Mit **▶ Fortsetzen** läuft er weiter, ab

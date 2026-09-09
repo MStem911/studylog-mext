@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.10.1';
+const APP_VERSION = '2.11.0';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -17,9 +17,9 @@ const KEY_BEWERTUNGEN = 'sl_bewertungen';
 const KEY_SENSORIK   = 'sl_sensorik';
 
 const DEFAULT_SCENARIOS = [
-  { id: 'sc_vr', name: 'Szenario VR Welt',       abbr: 'VR', icon: '🥽' },
-  { id: 'sc_vu', name: 'Szenario Verkehrsunfall', abbr: 'VU', icon: '🚗' },
-  { id: 'sc_kh', name: 'Szenario Krankenhaus',    abbr: 'KH', icon: '🏥' },
+  { id: 'sc_tut',  name: 'Tutorial',     abbr: 'TUT', icon: '🎓' },
+  { id: 'sc_holo', name: 'Hologate',     abbr: 'HG',  icon: '🥽' },
+  { id: 'sc_rc',   name: 'Rollercoaster', abbr: 'RC',  icon: '🎢' },
 ];
 
 // Sensorik-Hardware-Items (Tab "Sensorik"): feste Liste, kein UI zum Bearbeiten.
@@ -200,7 +200,7 @@ document.getElementById('confirm-cancel').addEventListener('click', () => {
 const PAGE_TITLES = {
   probanden: 'Teilnehmende',
   sensorik:  'Sensorik',
-  session:   'Sitzung aufzeichnen',
+  session:   'Szenario aufzeichnen',
   log:       'Protokoll',
   bewertung: 'Trainerbewertungsbogen',
   export:    'Export',
@@ -606,7 +606,13 @@ function toggleSensorik(id) {
     p.sensorik[id] = new Date().toISOString();
     save();
     renderSensorik();
-    showToast('✓ ' + item.label + '  ·  ' + localTimeStr(p.sensorik[id]));
+    if (SENSORIK_ITEMS.every(it => p.sensorik[it.id])) {
+      // Gesamte Sensorik für diese Person angelegt → direkt weiter zum Szenario-Tab
+      showToast('✓ Sensorik komplett — weiter zu Szenario');
+      setTimeout(() => showScreen('session'), 600);
+    } else {
+      showToast('✓ ' + item.label + '  ·  ' + localTimeStr(p.sensorik[id]));
+    }
   }
 }
 

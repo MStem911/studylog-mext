@@ -8,8 +8,8 @@
 ## Zweck (für Laien)
 
 StudyLog ist ein digitales Protokollheft für Studienleitende, die Testpersonen durch
-VR-gestützte Trainings- und Bewertungsszenarien führen (z. B. Einsatzübungen in den
-Bereichen Verkehrsunfall und Krankenhaus). Statt Papierbögen wird auf dem Smartphone
+VR-gestützte Trainings- und Bewertungsszenarien führen (im Auslieferungszustand die
+Szenarien Tutorial, Hologate und Rollercoaster). Statt Papierbögen wird auf dem Smartphone
 gestoppt, notiert und bewertet, wer wann welches Szenario durchlaufen hat — inklusive
 eines strukturierten Bewertungsbogens für die durchführende Trainingsleitung. Alle Daten
 bleiben dabei ausschließlich auf dem jeweiligen Gerät.
@@ -25,10 +25,11 @@ bleiben dabei ausschließlich auf dem jeweiligen Gerät.
 - **Einsatzkontext:** Mehrere Studienleitungen nutzen die App parallel auf eigenen
   Smartphones/Tablets, jeweils unabhängig voneinander, vollständig offline. Es gibt keine
   zentrale, geräteübergreifende Instanz der App.
-- **Themenfeld der Szenarien:** VR-Welt, Verkehrsunfall, Krankenhaus — die im Auslieferungszustand
-  hinterlegten Szenarien sowie der eingebaute Trainerbewertungsbogen (Dimensionen
-  "Lageerkundung", "Entscheidungsqualität", "Führung und Kommunikation" u. a., inkl. des
-  Begriffs "MANV") deuten auf einen Einsatz im Bereich Rettungswesen/Notfalltraining hin.
+- **Themenfeld der Szenarien:** im Auslieferungszustand Tutorial, Hologate, Rollercoaster
+  (früher VR-Welt / Verkehrsunfall / Krankenhaus; über den Szenario-Manager frei änderbar).
+  Der eingebaute Trainerbewertungsbogen (Dimensionen "Lageerkundung", "Entscheidungsqualität",
+  "Führung und Kommunikation" u. a., inkl. des Begriffs "MANV") deutet weiterhin auf einen
+  Einsatz im Bereich Rettungswesen/Notfalltraining hin.
   TODO: Datenschutz prüfen — konkreter Studienkontext und Rechtsgrundlage der
   Datenverarbeitung sind der App selbst nicht zu entnehmen und sollten für eine DSFA
   gesondert dokumentiert werden.
@@ -89,7 +90,7 @@ einem Gerät wegzubekommen, ist der manuelle CSV/JSON-Export (siehe
 
 | Datei | Rolle |
 |---|---|
-| `index.html` | App-Shell: alle 7 Screens (Teilnehmende, Sensorik, Sitzung, Protokoll, Bewertung, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
+| `index.html` | App-Shell: alle 7 Screens (Teilnehmende, Sensorik, Szenario [Screen-ID `session`], Protokoll, Bewertung, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
 | `style.css` | Dark-Mode-Design, responsives Layout (Sidebar auf Desktop/Tablet, Bottom-Nav auf Mobile) |
 | `app.js` | Gesamte Anwendungslogik: State-Verwaltung, Persistenz (`localStorage`), Rendering aller Screens, Event-Handling, Export |
 | `sw.js` | Service Worker: cached die App-Shell-Dateien für Offline-Nutzung, Cache-Invalidierung über Versionsnummer |
