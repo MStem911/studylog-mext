@@ -20,8 +20,8 @@ bleiben dabei ausschließlich auf dem jeweiligen Gerät.
   Sitzungen mit Teilnehmenden durchführen und protokollieren.
 - **Betroffene Personen:** Teilnehmende (Proband:innen) an VR-Trainingsszenarien, die
   ausschließlich unter einem Pseudonym (festes Format: 1 Buchstabe, 4 Zahlen, 3 Buchstaben,
-  z. B. `P1234ABC`) und einer Sensoriknummer (1–12)
-  geführt werden — keine Klarnamen in der App.
+  z. B. `P1234ABC`) geführt werden — optional zusätzlich eine Sensoriknummer (1–12). Keine
+  Klarnamen in der App.
 - **Einsatzkontext:** Mehrere Studienleitungen nutzen die App parallel auf eigenen
   Smartphones/Tablets, jeweils unabhängig voneinander, vollständig offline. Es gibt keine
   zentrale, geräteübergreifende Instanz der App.
@@ -51,7 +51,7 @@ bleiben dabei ausschließlich auf dem jeweiligen Gerät.
 **Wichtiger Hinweis zu "Sensorik":** Die App liest keine Sensor-/Messdaten (z. B. Eyetracking,
 Bewegungsdaten) aus. "Sensoriknummer", die Felder "Sensorik angelegt/abgelegt" und die
 Checkliste im Tab **Sensorik** (Items Shimmer ECG / Shimmer GSR+ / Polar Brustgurt / Garmin
-mit jeweiligem Anlege-Zeitpunkt) sind **manuell durch die Studienleitung erfasste Metadaten**
+mit jeweiligem Anlege-Zeitpunkt **je Teilnehmende:r**) sind **manuell durch die Studienleitung erfasste Metadaten**
 (welche nummerierte Sensor-Hardware-Einheit einer Person zugeordnet wurde, und wann welche
 Sensorik an-/abgelegt wurde) — nicht die Rohdaten des Sensors selbst. Details siehe
 [DATENFLUSS.md](./DATENFLUSS.md).

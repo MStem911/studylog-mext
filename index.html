@@ -55,7 +55,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <span class="app-version">v2.9.0</span>
+      <span class="app-version">v2.10.1</span>
       <span class="lock-icon">🔒</span>
     </div>
   </aside>
@@ -73,7 +73,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <span class="app-version">v2.9.0</span>
+        <span class="app-version">v2.10.1</span>
         <span class="lock-icon">🔒</span>
       </div>
     </header>
@@ -100,10 +100,6 @@
                 <label class="field-label" for="inp-pseudo">Pseudonym</label>
                 <input type="text" id="inp-pseudo" placeholder="z.B. P1234ABC" autocomplete="off" autocorrect="off" autocapitalize="characters">
                 <div class="field-error hidden" id="inp-pseudo-error">Format nicht korrekt – erwartet: 1 Buchstabe, 4 Zahlen, 3 Buchstaben (z.B. P1234ABC)</div>
-              </div>
-              <div>
-                <label class="field-label" for="inp-sensor">Sensoriknummer (1–12)</label>
-                <input type="number" id="inp-sensor" placeholder="z.B. 7" min="1" max="12" inputmode="numeric">
               </div>
               <div>
                 <label class="field-label" for="inp-handedness">Händigkeit</label>
@@ -139,14 +135,21 @@
           <div class="card">
             <div class="card-label-row">
               <span class="card-label" style="margin-bottom:0">SENSORIK-CHECKLISTE</span>
-              <button class="btn-text" id="btn-reset-sensorik">↺ Zurücksetzen</button>
+              <button class="btn-text hidden" id="btn-reset-sensorik">↺ Zurücksetzen</button>
             </div>
-            <p class="privacy-text" style="color:var(--text2); line-height:1.5; margin-bottom:14px">
-              Auf ein Item tippen, sobald die jeweilige Sensorik angelegt wurde — der Zeitpunkt
-              wird automatisch erfasst und gespeichert. Erneutes Tippen macht die Erfassung
-              rückgängig.
+            <label class="field-label" for="sensorik-proband-select">Teilnehmende:r</label>
+            <select id="sensorik-proband-select" class="field-select"></select>
+            <p class="privacy-text" style="color:var(--text2); line-height:1.5; margin:14px 0">
+              Auf ein Item tippen, sobald die jeweilige Sensorik bei dieser Person angelegt
+              wurde — der Zeitpunkt wird automatisch erfasst und gespeichert. Erneutes Tippen
+              macht die Erfassung rückgängig.
             </p>
             <div class="sensorik-list" id="sensorik-list"></div>
+            <div id="sensorik-empty" class="empty-state hidden">
+              <div class="empty-icon">👥</div>
+              <div class="empty-text">Noch keine Teilnehmenden angelegt</div>
+              <div class="empty-sub">Lege zuerst im Bereich „Teilnehmende" eine Person an</div>
+            </div>
           </div>
         </div>
       </section>
@@ -401,6 +404,18 @@
 
   </div><!-- /main-wrapper -->
 
+  <!-- Sensorik Prompt (nach Person anlegen) -->
+  <div id="sensorik-prompt-overlay" class="overlay hidden">
+    <div class="dialog-box">
+      <div class="dialog-title">🩹 Sensorik erfassen?</div>
+      <div class="dialog-msg" id="sensorik-prompt-msg">Person wurde angelegt. Jetzt die Sensorik für diese Person erfassen?</div>
+      <div class="btn-row">
+        <button class="btn btn-primary flex-1" id="sensorik-prompt-yes">✓ Ja, zur Sensorik</button>
+        <button class="btn btn-ghost flex-1" id="sensorik-prompt-no">Später / Nein</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Bewertungsbogen Prompt (nach Sitzung speichern) -->
   <div id="bew-prompt-overlay" class="overlay hidden">
     <div class="dialog-box">
@@ -498,8 +513,8 @@
             <div class="field-error hidden" id="edit-pseudo-error">Format nicht korrekt – erwartet: 1 Buchstabe, 4 Zahlen, 3 Buchstaben (z.B. P1234ABC)</div>
           </div>
           <div>
-            <label class="field-label" for="edit-sensor">Sensoriknummer (1–12)</label>
-            <input type="number" id="edit-sensor" min="1" max="12" inputmode="numeric">
+            <label class="field-label" for="edit-sensor">Sensoriknummer (1–12, optional)</label>
+            <input type="number" id="edit-sensor" min="1" max="12" inputmode="numeric" placeholder="—">
           </div>
         </div>
         <label class="field-label" for="edit-note">Notiz (optional)</label>

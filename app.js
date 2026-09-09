@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.9.0';
+const APP_VERSION = '2.10.1';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -22,14 +22,14 @@ const DEFAULT_SCENARIOS = [
   { id: 'sc_kh', name: 'Szenario Krankenhaus',    abbr: 'KH', icon: '🏥' },
 ];
 
-// Sensorik-Checkliste (Tab "Sensorik"): feste Item-Liste, jedes Item bekommt beim Abhaken
-// einen Zeitstempel (checkedAt = ISO-String) "wann angelegt". Analog zu DEFAULT_TAGS eine
-// Konfigurations-Default-Liste; der erfasste Zeitpunkt ist Laufdaten.
-const DEFAULT_SENSORIK = [
-  { id: 'se_ecg',    label: 'Shimmer ECG',     checkedAt: null },
-  { id: 'se_gsr',    label: 'Shimmer GSR+',    checkedAt: null },
-  { id: 'se_polar',  label: 'Polar Brustgurt', checkedAt: null },
-  { id: 'se_garmin', label: 'Garmin',          checkedAt: null },
+// Sensorik-Hardware-Items (Tab "Sensorik"): feste Liste, kein UI zum Bearbeiten.
+// Der Zeitpunkt "angelegt" wird PRO Teilnehmende:r in p.sensorik[itemId] als ISO-String
+// gespeichert (fehlender Schlüssel = für diese Person noch nicht angelegt).
+const SENSORIK_ITEMS = [
+  { id: 'se_ecg',    label: 'Shimmer ECG' },
+  { id: 'se_gsr',    label: 'Shimmer GSR+' },
+  { id: 'se_polar',  label: 'Polar Brustgurt' },
+  { id: 'se_garmin', label: 'Garmin' },
 ];
 
 const DEFAULT_TAGS = [
@@ -48,7 +48,7 @@ let settings         = { deviceLabel: '', lastExport: null, multiProband: false 
 let scenarios        = [];
 let tags             = [];
 let bewertungen      = [];
-let sensorik         = [];
+let selectedSensorikProbandId = '';
 let selectedScenId   = '';
 let selectedProbandIds = [];
 let selectedBewSessionIds = [];
@@ -76,7 +76,6 @@ function save() {
     localStorage.setItem(KEY_SCENARIOS,   JSON.stringify(scenarios));
     localStorage.setItem(KEY_TAGS,        JSON.stringify(tags));
     localStorage.setItem(KEY_BEWERTUNGEN, JSON.stringify(bewertungen));
-    localStorage.setItem(KEY_SENSORIK,    JSON.stringify(sensorik));
   } catch(e) { showToast('⚠ Speicherfehler'); }
 }
 
@@ -88,26 +87,21 @@ function load() {
     const sc = localStorage.getItem(KEY_SCENARIOS);
     const tg = localStorage.getItem(KEY_TAGS);
     const bw = localStorage.getItem(KEY_BEWERTUNGEN);
-    const sn = localStorage.getItem(KEY_SENSORIK);
     if (p)  probanden   = JSON.parse(p);
     if (s)  sessions    = JSON.parse(s);
     if (st) settings    = { ...settings, ...JSON.parse(st) };
     if (bw) bewertungen = JSON.parse(bw);
+    // Sensorik wird pro Person in p.sensorik geführt; für Alt-Daten sicherstellen, dass
+    // das Objekt existiert. Der frühere globale Key sl_sensorik (v2.9.0) wird verworfen.
+    probanden.forEach(pr => { if (!pr.sensorik || typeof pr.sensorik !== 'object') pr.sensorik = {}; });
+    localStorage.removeItem(KEY_SENSORIK);
     scenarios = sc ? JSON.parse(sc) : deepCopy(DEFAULT_SCENARIOS);
     if (!scenarios.length) scenarios = deepCopy(DEFAULT_SCENARIOS);
     tags = tg ? JSON.parse(tg) : [...DEFAULT_TAGS];
     if (!tags.length) tags = [...DEFAULT_TAGS];
-    sensorik = sn ? JSON.parse(sn) : deepCopy(DEFAULT_SENSORIK);
-    if (!sensorik.length) sensorik = deepCopy(DEFAULT_SENSORIK);
-    // Fehlende Default-Items ergänzen (falls die Liste später erweitert wird), ohne
-    // bereits erfasste Zeitstempel zu verlieren.
-    DEFAULT_SENSORIK.forEach(def => {
-      if (!sensorik.some(i => i.id === def.id)) sensorik.push({ ...def });
-    });
   } catch(e) {
     scenarios = deepCopy(DEFAULT_SCENARIOS);
     tags = [...DEFAULT_TAGS];
-    sensorik = deepCopy(DEFAULT_SENSORIK);
   }
 }
 
@@ -284,7 +278,7 @@ function renderProbanden(filter = '') {
       <div class="avatar">${esc(initials)}</div>
       <div class="proband-info">
         <div class="proband-name">${esc(p.pseudo)}</div>
-        <div class="proband-sub">SNR: ${esc(p.sensor)}${p.handedness ? '  ·  Hand: ' + esc(p.handedness) : ''}${p.note ? '  ·  ' + esc(p.note) : ''}${sensTimes}</div>
+        <div class="proband-sub">${p.sensor ? 'SNR: ' + esc(p.sensor) : 'ohne SNR'}${p.handedness ? '  ·  Hand: ' + esc(p.handedness) : ''}${p.note ? '  ·  ' + esc(p.note) : ''}${sensTimes}</div>
       </div>
       <span class="badge badge-count">${done} Sitzung${done !== 1 ? 'en' : ''}</span>
     </button>`;
@@ -310,28 +304,37 @@ document.getElementById('inp-pseudo').addEventListener('input', () =>
 
 function saveNewProband() {
   const pseudo = document.getElementById('inp-pseudo').value.trim();
-  const sRaw   = document.getElementById('inp-sensor').value.trim();
   const note   = document.getElementById('inp-note').value.trim();
   const handedness = document.getElementById('inp-handedness').value;
   if (!pseudo) { showToast('⚠ Pseudonym eingeben'); return; }
   if (!setPseudoFieldValidity('inp-pseudo', 'inp-pseudo-error')) { showToast('⚠ Format ungültig (z.B. P1234ABC)'); return; }
-  if (!sRaw)   { showToast('⚠ Sensoriknummer eingeben'); return; }
-  const sensor = parseInt(sRaw, 10);
-  if (isNaN(sensor) || sensor < 1 || sensor > 12) { showToast('⚠ Sensoriknummer 1–12'); return; }
   if (handedness !== 'Rechts' && handedness !== 'Links') { showToast('⚠ Händigkeit wählen'); return; }
-  if (probanden.some(p => String(p.sensor) === String(sensor))) { showToast('⚠ SNR ' + sensor + ' vergeben'); return; }
   if (probanden.some(p => p.pseudo.toLowerCase() === pseudo.toLowerCase())) { showToast('⚠ Pseudonym vergeben'); return; }
   const nowISO = new Date().toISOString();
-  // Sensorik-Zeiten werden beim Anlegen nicht mehr erfasst – nachträglich über "Person bearbeiten".
-  probanden.push({ id: uid(), pseudo, sensor, note, handedness, sensorAngelegtISO: null, sensorAbgelegtISO: null, createdAt: nowISO });
+  // Sensoriknummer wird beim Anlegen nicht mehr erfasst – ggf. nachträglich über "Person bearbeiten".
+  // Sensorik-Zeiten ebenfalls nur im Bearbeiten-Dialog.
+  const newId = uid();
+  probanden.push({ id: newId, pseudo, sensor: '', note, handedness, sensorik: {}, sensorAngelegtISO: null, sensorAbgelegtISO: null, createdAt: nowISO });
   save();
   clearAddForm();
   document.getElementById('add-form').classList.add('hidden');
   renderProbanden(document.getElementById('search-input').value);
   showToast('✓ ' + pseudo + ' angelegt');
+  // Direkt anbieten, die Sensorik für die neue Person zu erfassen
+  selectedSensorikProbandId = newId;
+  document.getElementById('sensorik-prompt-msg').textContent =
+    `„${pseudo}" wurde angelegt. Jetzt die Sensorik für diese Person erfassen?`;
+  document.getElementById('sensorik-prompt-overlay').classList.remove('hidden');
 }
+document.getElementById('sensorik-prompt-yes').addEventListener('click', () => {
+  document.getElementById('sensorik-prompt-overlay').classList.add('hidden');
+  showScreen('sensorik');
+});
+document.getElementById('sensorik-prompt-no').addEventListener('click', () => {
+  document.getElementById('sensorik-prompt-overlay').classList.add('hidden');
+});
 function clearAddForm() {
-  ['inp-pseudo','inp-sensor','inp-note','inp-handedness'].forEach(id => { document.getElementById(id).value = ''; });
+  ['inp-pseudo','inp-note','inp-handedness'].forEach(id => { document.getElementById(id).value = ''; });
   setPseudoFieldValidity('inp-pseudo', 'inp-pseudo-error');
 }
 
@@ -341,7 +344,7 @@ function openProbandEdit(id) {
   if (!p) return;
   editingProbandId = id;
   document.getElementById('edit-pseudo').value = p.pseudo;
-  document.getElementById('edit-sensor').value = p.sensor;
+  document.getElementById('edit-sensor').value = p.sensor || '';
   document.getElementById('edit-note').value   = p.note || '';
   document.getElementById('edit-handedness').value = p.handedness || '';
   document.getElementById('edit-sensor-an').value = isoToTimeInput(p.sensorAngelegtISO);
@@ -374,11 +377,14 @@ document.getElementById('btn-save-proband-edit').addEventListener('click', () =>
   const abRaw  = document.getElementById('edit-sensor-ab').value;
   if (!pseudo) { showToast('⚠ Pseudonym eingeben'); return; }
   if (!setPseudoFieldValidity('edit-pseudo', 'edit-pseudo-error')) { showToast('⚠ Format ungültig (z.B. P1234ABC)'); return; }
-  if (!sRaw)   { showToast('⚠ Sensoriknummer eingeben'); return; }
-  const sensor = parseInt(sRaw, 10);
-  if (isNaN(sensor) || sensor < 1 || sensor > 12) { showToast('⚠ Sensoriknummer 1–12'); return; }
+  // Sensoriknummer ist optional; nur prüfen, wenn eine eingegeben wurde
+  let sensor = '';
+  if (sRaw) {
+    sensor = parseInt(sRaw, 10);
+    if (isNaN(sensor) || sensor < 1 || sensor > 12) { showToast('⚠ Sensoriknummer 1–12'); return; }
+    if (probanden.some((p,i) => i !== idx && String(p.sensor) === String(sensor))) { showToast('⚠ SNR vergeben'); return; }
+  }
   if (handedness !== 'Rechts' && handedness !== 'Links') { showToast('⚠ Händigkeit wählen'); return; }
-  if (probanden.some((p,i) => i !== idx && String(p.sensor) === String(sensor))) { showToast('⚠ SNR vergeben'); return; }
   if (probanden.some((p,i) => i !== idx && p.pseudo.toLowerCase() === pseudo.toLowerCase())) { showToast('⚠ Pseudonym vergeben'); return; }
   const baseAn = probanden[idx].sensorAngelegtISO || probanden[idx].createdAt || new Date().toISOString();
   const baseAb = probanden[idx].sensorAbgelegtISO || probanden[idx].createdAt || new Date().toISOString();
@@ -403,10 +409,12 @@ document.getElementById('btn-delete-proband').addEventListener('click', () => {
     `"${p ? p.pseudo : ''}" löschen?${warn}`,
     () => {
       probanden = probanden.filter(x => x.id !== idToDelete);
+      if (selectedSensorikProbandId === idToDelete) selectedSensorikProbandId = '';
       save();
       closeProbandEdit();
       renderProbanden(document.getElementById('search-input').value);
       buildProbandSelect();
+      renderSensorik();
       showToast('Person gelöscht');
     }
   );
@@ -443,7 +451,7 @@ function buildProbandSelect() {
   const sel = document.getElementById('sel-proband');
   const cur = sel.value;
   sel.innerHTML = '<option value="">— Teilnehmende wählen —</option>' +
-    probanden.map(p => `<option value="${esc(p.id)}">SNR ${esc(p.sensor)}  (${esc(p.pseudo)})</option>`).join('');
+    probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}${p.sensor ? '  ·  SNR ' + esc(p.sensor) : ''}</option>`).join('');
   if (probanden.some(p => p.id === cur)) sel.value = cur;
 
   const multiMode = !!settings.multiProband;
@@ -464,7 +472,7 @@ function buildProbandMultiList() {
     const isSel = selectedProbandIds.includes(p.id);
     return `<button class="proband-multi-item${isSel ? ' selected' : ''}" data-id="${esc(p.id)}">
       <span class="pm-check">${isSel ? '✓' : ''}</span>
-      <span>SNR ${esc(p.sensor)}  (${esc(p.pseudo)})</span>
+      <span>${esc(p.pseudo)}${p.sensor ? '  ·  SNR ' + esc(p.sensor) : ''}</span>
     </button>`;
   }).join('');
   list.querySelectorAll('.proband-multi-item').forEach(btn =>
@@ -529,13 +537,47 @@ function getActiveTags(containerId) {
   return Array.from(document.querySelectorAll(`#${containerId} .tag.active`)).map(t => t.dataset.tag);
 }
 
-// ── Sensorik-Checkliste ───────────────────────────────────────────────────────
+// ── Sensorik-Checkliste (pro Teilnehmende:r) ──────────────────────────────────
+function buildSensorikProbandSelect() {
+  const sel = document.getElementById('sensorik-proband-select');
+  if (!sel) return;
+  // Default: zuletzt angelegte Person, falls (noch) keine gültige Auswahl besteht
+  if (!probanden.some(p => p.id === selectedSensorikProbandId)) {
+    selectedSensorikProbandId = probanden.length ? probanden[probanden.length - 1].id : '';
+  }
+  sel.innerHTML = probanden.length
+    ? probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}${p.sensor ? '  ·  SNR ' + esc(p.sensor) : ''}</option>`).join('')
+    : '<option value="">— keine Teilnehmenden —</option>';
+  sel.value = selectedSensorikProbandId;
+  sel.disabled = !probanden.length;
+}
+document.getElementById('sensorik-proband-select').addEventListener('change', e => {
+  selectedSensorikProbandId = e.target.value;
+  renderSensorik();
+});
+
 function renderSensorik() {
-  const list = document.getElementById('sensorik-list');
+  const list  = document.getElementById('sensorik-list');
+  const empty = document.getElementById('sensorik-empty');
+  const btnReset = document.getElementById('btn-reset-sensorik');
   if (!list) return;
-  list.innerHTML = sensorik.map(item => {
-    const done = !!item.checkedAt;
-    const timeStr = done ? localDatetimeStr(item.checkedAt) : 'noch nicht angelegt';
+  buildSensorikProbandSelect();
+  const p = probanden.find(x => x.id === selectedSensorikProbandId);
+  if (!p) {
+    list.innerHTML = '';
+    list.classList.add('hidden');
+    empty.classList.remove('hidden');
+    btnReset.classList.add('hidden');
+    return;
+  }
+  if (!p.sensorik) p.sensorik = {};
+  empty.classList.add('hidden');
+  list.classList.remove('hidden');
+  btnReset.classList.remove('hidden');
+  list.innerHTML = SENSORIK_ITEMS.map(item => {
+    const at = p.sensorik[item.id] || null;
+    const done = !!at;
+    const timeStr = done ? localDatetimeStr(at) : 'noch nicht angelegt';
     return `<button class="sensorik-item${done ? ' checked' : ''}" data-id="${esc(item.id)}">
       <span class="sensorik-check">${done ? '✓' : ''}</span>
       <span class="sensorik-info">
@@ -550,26 +592,30 @@ function renderSensorik() {
 }
 
 function toggleSensorik(id) {
-  const item = sensorik.find(x => x.id === id);
+  const p = probanden.find(x => x.id === selectedSensorikProbandId);
+  if (!p) return;
+  if (!p.sensorik) p.sensorik = {};
+  const item = SENSORIK_ITEMS.find(x => x.id === id);
   if (!item) return;
-  if (item.checkedAt) {
+  if (p.sensorik[id]) {
     // Erfassung rückgängig machen — Sicherheitsabfrage, da der Zeitstempel verloren geht
     showConfirm('Erfassung rückgängig machen',
-      `„${item.label}" wurde um ${localTimeStr(item.checkedAt)} als angelegt erfasst. Erfassung wirklich entfernen?`,
-      () => { item.checkedAt = null; save(); renderSensorik(); showToast('Erfassung entfernt'); });
+      `„${item.label}" wurde für ${p.pseudo} um ${localTimeStr(p.sensorik[id])} als angelegt erfasst. Erfassung wirklich entfernen?`,
+      () => { delete p.sensorik[id]; save(); renderSensorik(); showToast('Erfassung entfernt'); });
   } else {
-    item.checkedAt = new Date().toISOString();
+    p.sensorik[id] = new Date().toISOString();
     save();
     renderSensorik();
-    showToast('✓ ' + item.label + '  ·  ' + localTimeStr(item.checkedAt));
+    showToast('✓ ' + item.label + '  ·  ' + localTimeStr(p.sensorik[id]));
   }
 }
 
 document.getElementById('btn-reset-sensorik').addEventListener('click', () => {
-  if (!sensorik.some(i => i.checkedAt)) { showToast('Nichts zurückzusetzen'); return; }
+  const p = probanden.find(x => x.id === selectedSensorikProbandId);
+  if (!p || !p.sensorik || !Object.keys(p.sensorik).length) { showToast('Nichts zurückzusetzen'); return; }
   showConfirm('Checkliste zurücksetzen',
-    'Alle erfassten Sensorik-Zeitpunkte werden entfernt, damit die Checkliste für den nächsten Durchlauf wieder leer ist.',
-    () => { sensorik.forEach(i => i.checkedAt = null); save(); renderSensorik(); showToast('Checkliste zurückgesetzt'); });
+    `Alle erfassten Sensorik-Zeitpunkte für „${p.pseudo}" werden entfernt.`,
+    () => { p.sensorik = {}; save(); renderSensorik(); showToast('Checkliste zurückgesetzt'); });
 });
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
@@ -907,7 +953,7 @@ function buildLogFilters() {
   stSel.innerHTML = '<option value="all">Alle Szenarien</option>' +
     scenarios.map(sc => `<option value="${esc(sc.id)}">${esc(sc.icon)} ${esc(sc.name)}</option>`).join('');
   prSel.innerHTML = '<option value="all">Alle Teilnehmenden</option>' +
-    probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)} (${esc(p.sensor)})</option>`).join('');
+    probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}${p.sensor ? ' (SNR ' + esc(p.sensor) + ')' : ''}</option>`).join('');
   if (scenarios.find(s => s.id === stVal)) stSel.value = stVal;
   if (probanden.find(p => p.id === prVal)) prSel.value = prVal;
 }
@@ -1032,7 +1078,7 @@ function openEditSession(id) {
   if (!s) return;
   const prSel = document.getElementById('edit-proband');
   prSel.innerHTML = probanden.map(p =>
-    `<option value="${esc(p.id)}"${p.id === s.probandId ? ' selected' : ''}>${esc(p.pseudo)} (${esc(p.sensor)})</option>`
+    `<option value="${esc(p.id)}"${p.id === s.probandId ? ' selected' : ''}>${esc(p.pseudo)}${p.sensor ? ' (SNR ' + esc(p.sensor) + ')' : ''}</option>`
   ).join('');
   if (!probanden.find(p => p.id === s.probandId)) {
     prSel.innerHTML = `<option value="${esc(s.probandId)}" selected>${esc(s.pseudo)} (gelöscht)</option>` + prSel.innerHTML;
@@ -1202,11 +1248,11 @@ function recordExport() {
 }
 document.getElementById('btn-clear-data').addEventListener('click', () => {
   showConfirm('⚠ Alle Daten löschen',
-    'Alle Teilnehmenden, Sitzungsdaten, Bewertungen und die erfassten Sensorik-Zeitpunkte werden unwiderruflich gelöscht. Vorher exportieren!',
+    'Alle Teilnehmenden (inkl. erfasster Sensorik-Zeitpunkte), Sitzungsdaten und Bewertungen werden unwiderruflich gelöscht. Vorher exportieren!',
     () => {
       probanden = []; sessions = []; bewertungen = []; settings.lastExport = null;
       selectedProbandIds = []; selectedBewSessionIds = []; pendingBewertungSessionIds = [];
-      sensorik.forEach(i => i.checkedAt = null);
+      selectedSensorikProbandId = '';
       save(); renderProbanden(); renderLog(); renderExport(); renderSensorik();
       showToast('Alle Daten gelöscht');
     });

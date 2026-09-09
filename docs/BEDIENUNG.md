@@ -21,8 +21,8 @@ auf Tablet/Desktop):
 
 | Bereich | Zweck |
 |---|---|
-| 👤 **Teilnehmende** | Personen mit Pseudonym + Sensoriknummer anlegen und verwalten |
-| 🩹 **Sensorik** | Checkliste der Sensorik-Hardware; pro Item wird beim Abhaken automatisch der Anlege-Zeitpunkt erfasst |
+| 👤 **Teilnehmende** | Personen mit Pseudonym + Händigkeit anlegen und verwalten (Sensoriknummer optional, nur im Bearbeiten-Dialog) |
+| 🩹 **Sensorik** | Checkliste der Sensorik-Hardware **pro Teilnehmende:r** (im Dropdown wählbar); pro Item wird beim Abhaken automatisch der Anlege-Zeitpunkt erfasst |
 | ⏺ **Sitzung** | Timer starten/stoppen, Szenario wählen, Abweichungen/Notizen erfassen |
 | ☰ **Protokoll** | Übersicht aller gespeicherten Sitzungen, filtern, bearbeiten, löschen |
 | 📝 **Bewertung** | Trainerbewertungsbogen zu einer Sitzung ausfüllen |
@@ -38,28 +38,33 @@ auf Tablet/Desktop):
    Zahlen, dann 3 Buchstaben (z. B. `P1234ABC`). Passt die Eingabe nicht zum Format, wird das
    Feld sofort rot markiert mit dem Hinweis "Format nicht korrekt" darunter; Anlegen ist erst
    möglich, wenn das Format stimmt.
-3. **Sensoriknummer** (1–12) der zugewiesenen Sensor-Einheit eingeben.
-4. **Händigkeit** wählen — "Rechts" oder "Links" (Pflichtfeld, relevant für die
+3. **Händigkeit** wählen — "Rechts" oder "Links" (Pflichtfeld, relevant für die
    Sensorplatzierung). Ohne Auswahl ist Anlegen/Speichern nicht möglich.
-5. Optional: Notiz eintragen (z. B. "Brille").
-6. Mit **✓ Anlegen** speichern.
+4. Optional: Notiz eintragen (z. B. "Brille").
+5. Mit **✓ Anlegen** speichern.
+6. Danach fragt die App **"Sensorik erfassen?"**. Mit **Ja, zur Sensorik** springt man direkt
+   in den Sensorik-Tab, wobei die gerade angelegte Person schon ausgewählt ist. **Später /
+   Nein** bleibt bei den Teilnehmenden.
 
-Die Uhrzeiten "Sensorik angelegt" / "Sensorik abgelegt" (am Teilnehmenden-Datensatz) werden
-**nicht** beim Anlegen erfasst, sondern nachträglich über **Person bearbeiten** (Tippen auf
-eine bereits angelegte Person). Davon unabhängig ist die geräteweite **Sensorik-Checkliste**
-im gleichnamigen Tab (siehe nächster Abschnitt).
+Die **Sensoriknummer** (1–12) wird beim Anlegen **nicht mehr** abgefragt. Sie ist optional
+und kann bei Bedarf nachträglich über **Person bearbeiten** (Tippen auf eine bereits
+angelegte Person) eingetragen werden — ebenso die Uhrzeiten "Sensorik angelegt" / "Sensorik
+abgelegt". Die **Sensorik-Checkliste** im gleichnamigen Tab (siehe nächster Abschnitt) ist
+davon unabhängig.
 
 ### 2. Sensorik anlegen und abhaken
 
-1. In den Bereich **🩹 Sensorik** wechseln. Die Checkliste enthält feste Items:
-   Shimmer ECG, Shimmer GSR+, Polar Brustgurt, Garmin.
-2. Sobald eine Sensorik-Einheit angelegt ist, das entsprechende Item **antippen** — der
-   aktuelle Zeitpunkt (Datum + Uhrzeit, Gerätezeit) wird automatisch erfasst, gespeichert
-   und unter dem Item angezeigt.
-3. Versehentlich abgehakt? Item erneut antippen und die Sicherheitsabfrage bestätigen — die
+1. In den Bereich **🩹 Sensorik** wechseln. Oben im Dropdown **Teilnehmende:r** die Person
+   wählen — standardmäßig ist die **zuletzt angelegte** Person vorausgewählt.
+2. Die Checkliste enthält feste Items: Shimmer ECG, Shimmer GSR+, Polar Brustgurt, Garmin —
+   die erfassten Zeitpunkte gelten jeweils **nur für die ausgewählte Person**.
+3. Sobald eine Sensorik-Einheit bei dieser Person angelegt ist, das entsprechende Item
+   **antippen** — der aktuelle Zeitpunkt (Datum + Uhrzeit, Gerätezeit) wird automatisch
+   erfasst, gespeichert und unter dem Item angezeigt.
+4. Versehentlich abgehakt? Item erneut antippen und die Sicherheitsabfrage bestätigen — die
    Erfassung wird entfernt.
-4. Vor einem neuen Durchlauf mit **↺ Zurücksetzen** (oben rechts) alle erfassten Zeitpunkte
-   auf einmal löschen. Die Checkliste ist geräteweit (nicht pro Teilnehmende:r).
+5. Mit **↺ Zurücksetzen** (oben rechts) alle erfassten Zeitpunkte **der ausgewählten Person**
+   auf einmal löschen.
 
 ### 3. Sitzung durchführen
 

@@ -52,16 +52,17 @@ Event-Listener leben in diesem einen Closure-Scope; es gibt keine Module/Imports
 UI-/Timer-State wie `sessionRunning`, `selectedScenId`, `detailSessionId`). Zwei zentrale
 Funktionen synchronisieren diesen State mit `localStorage`:
 
-- **`load()`** — beim Start einmal aufgerufen, liest alle sieben
+- **`load()`** — beim Start einmal aufgerufen, liest alle sechs
   `localStorage`-Keys, parsed JSON, füllt fehlende/leere Konfigurationslisten
-  (`scenarios`, `tags`, `sensorik`) mit Defaults auf. Bei `sensorik` werden zusätzlich
-  fehlende Default-Items per `id` ergänzt, ohne bereits erfasste Zeitstempel zu verlieren.
-- **`save()`** — nach **jeder** datenverändernden Aktion aufgerufen, schreibt alle sieben
+  (`scenarios`, `tags`) mit Defaults auf und stellt sicher, dass jeder `probanden`-Eintrag
+  ein `sensorik`-Objekt hat. Der frühere globale Key `sl_sensorik` (v2.9.0) wird verworfen
+  (`localStorage.removeItem`).
+- **`save()`** — nach **jeder** datenverändernden Aktion aufgerufen, schreibt alle sechs
   State-Variablen zurück in `localStorage`. Kein Debouncing/Batching — jede einzelne
   Aktion (Person anlegen, Sitzung speichern, Tag umbenennen …) löst einen vollständigen
   `save()`-Durchlauf aus.
 
-**Wichtig für Änderungen:** Da `save()` immer alle sieben Keys neu schreibt, reicht es bei
+**Wichtig für Änderungen:** Da `save()` immer alle sechs Keys neu schreibt, reicht es bei
 neuen Feldern, die betroffene State-Variable (z. B. ein Objekt in `probanden`) zu ergänzen —
 es muss keine Migration/Schema-Version gepflegt werden. Es gibt **keine
 Schema-Versionierung** von `localStorage`-Daten; neue Felder müssen daher stets mit
@@ -72,12 +73,11 @@ Schema-Versionierung** von `localStorage`-Daten; neue Felder müssen daher stets
 
 | Key | State-Variable | Datensatz-Form (wichtigste Felder) |
 |---|---|---|
-| `sl_probanden` | `probanden` | `{ id, pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO, createdAt }` — `handedness`: `'Rechts'` \| `'Links'` — Pflichtfeld beim Anlegen/Bearbeiten (Formular erzwingt eine Auswahl). Alt-Daten ohne Feld gelten als leer und müssen beim nächsten Bearbeiten gesetzt werden |
+| `sl_probanden` | `probanden` | `{ id, pseudo, sensor, note, handedness, sensorik, sensorAngelegtISO, sensorAbgelegtISO, createdAt }` — `sensor`: Sensoriknummer 1–12 **oder `''`**; seit v2.10.1 **nicht mehr im Anlege-Formular**, im Bearbeiten-Dialog optional (nur bei Eingabe auf 1–12 + Eindeutigkeit geprüft). `handedness`: `'Rechts'` \| `'Links'` — Pflichtfeld beim Anlegen/Bearbeiten (Formular erzwingt eine Auswahl). `sensorik`: Objekt `{ [itemId]: isoString }` — Zeitpunkt „angelegt" je Sensorik-Item (Tab „Sensorik"), fehlender Schlüssel = noch nicht angelegt. Item-IDs/-Labels fest in `SENSORIK_ITEMS` (Shimmer ECG / Shimmer GSR+ / Polar Brustgurt / Garmin). Alt-Daten ohne `handedness`/`sensorik` werden beim Laden als leer normalisiert |
 | `sl_sessions` | `sessions` | `{ id, probandId, pseudo, sensor, scenarioId, scenarioName, scenarioAbbr, date, startISO, endISO, duration_s, pauses[], pauseCount, pauseDuration_s, deviations[], notes, deviceLabel, createdAt, editedAt? }` |
 | `sl_bewertungen` | `bewertungen` | `{ id, sessionId, pseudo, sensor, scenarioId, scenarioName, scenarioAbbr, date, scores: { a1..z20 }, notes, savedAt }` |
 | `sl_scenarios` | `scenarios` | `{ id, name, abbr, icon }` — Default: VR Welt / Verkehrsunfall / Krankenhaus |
 | `sl_tags` | `tags` | `string[]` — freie Liste von Abweichungs-Bezeichnungen |
-| `sl_sensorik` | `sensorik` | `[{ id, label, checkedAt }]` — feste Checkliste (Tab „Sensorik"). `checkedAt`: ISO-String „wann angelegt" oder `null`. Default-Items: Shimmer ECG / Shimmer GSR+ / Polar Brustgurt / Garmin. Item-Liste ist Konfiguration, `checkedAt` sind Laufdaten (werden von „Alle Daten löschen" auf `null` gesetzt) |
 | `sl_settings` | `settings` | `{ deviceLabel, lastExport, multiProband }` |
 
 **Pausen-Timer (`pauses[]`):** Jeder Eintrag hat die Form `{ startISO, endISO, duration_s }`.
@@ -135,17 +135,17 @@ Dropdown vorausgewählt (Einzel-Modus).
 
 | Abschnitt (Kommentar-Marker im Code) | Zeilen (ca.) | Verantwortlichkeit |
 |---|---|---|
-| App Version / Storage Keys / Defaults | 1–~75 | Versions-Konstante, `localStorage`-Keys, Default-Szenarien/-Tags/-Sensorik (`DEFAULT_SENSORIK`), State-Deklaration |
+| App Version / Storage Keys / Defaults | 1–~75 | Versions-Konstante, `localStorage`-Keys, Default-Szenarien/-Tags, `SENSORIK_ITEMS` (feste Sensorik-Item-Liste), State-Deklaration |
 | Persistence | 58–92 | `save()`, `load()` |
 | Utilities | 92–166 | `uid()`, Datum/Zeit-Formatierung (`formatTime`, `localTimeStr`, `isoToTimeInput`, `rebuildISO`), `esc()` (HTML-Escaping gegen XSS beim Rendern von Nutzereingaben), `showToast()`, `isValidPseudoFormat()`/`setPseudoFieldValidity()` (Pseudonym-Formatprüfung inkl. Live-Rotmarkierung im Formular) |
 | Confirm Dialog | 166–183 | Generischer Bestätigungsdialog (`showConfirm`), von mehreren Lösch-Aktionen wiederverwendet |
 | Navigation | 183–234 | `showScreen()` (Screen-Wechsel + Re-Render des Zielscreens), Nav-Button-Listener |
 | TEILNEHMENDE | 234–~400 | Liste rendern/filtern, Anlegen, Bearbeiten, Löschen von Personen (inkl. Pseudonym-Formatprüfung — live per `input`-Listener und beim Speichern — beim Anlegen/Bearbeiten) |
-| SENSORIK-CHECKLISTE | im Abschnitt „Tags" (vor TIMER) | `renderSensorik()` (feste Item-Liste als Buttons rendern), `toggleSensorik(id)` (Item an-/abhaken → `checkedAt` = `new Date().toISOString()` setzen bzw. per `showConfirm` wieder auf `null`), Reset-Button `btn-reset-sensorik` (alle `checkedAt` löschen) |
+| SENSORIK-CHECKLISTE (pro Teilnehmende:r) | vor TIMER | `buildSensorikProbandSelect()` (Personen-Dropdown; Default = zuletzt angelegte Person via `selectedSensorikProbandId`), `renderSensorik()` (Items für die gewählte Person; Empty-State ohne Personen), `toggleSensorik(id)` (setzt/löscht `p.sensorik[id]` = ISO-String, Löschen per `showConfirm`), Reset-Button `btn-reset-sensorik` (`p.sensorik = {}` für die gewählte Person). Nach „Person anlegen" öffnet `sensorik-prompt-overlay` (Ja → `showScreen('sensorik')`) |
 | SESSION | 389–~830 | Szenario-Auswahl, Teilnehmenden-Auswahl (Einzel- **und** Mehrfachauswahl je nach `settings.multiProband`, `getSelectedProbandIds()`), Start/Pause/Fortsetzen/Stopp-Timer (`startTimer`, `pauseTimer`, `resumeTimer`, `stopTimer`), Tag-Zeilen, Sitzung speichern (ggf. mehrere Einträge bei Mehrfachauswahl), Szenario-/Tag-Manager (CRUD für Konfiguration) |
 | LOG | 830–1034 | Sitzungsliste mit Filtern, Detailansicht, Bearbeiten, Löschen |
 | EXPORT | 1034–1145 | Statistiken, CSV-/JSON-Export, Geräte-Label |
-| EINSTELLUNGEN | ~1195 | `renderSettingsScreen()`, Toggle "Mehrere Teilnehmende gleichzeitig" (`settings.multiProband`), "Alle Daten löschen" (`btn-clear-data`, setzt zusätzlich alle `sensorik[].checkedAt` auf `null`) |
+| EINSTELLUNGEN | ~1195 | `renderSettingsScreen()`, Toggle "Mehrere Teilnehmende gleichzeitig" (`settings.multiProband`), "Alle Daten löschen" (`btn-clear-data`; leert `probanden` inkl. `p.sensorik`) |
 | BEWERTUNGSBOGEN | 1157–1410 | Post-Session-Prompt (inkl. Vorschlag zur gemeinsamen Bewertung bei mehreren Teilnehmenden), Sitzungsauswahl (Einzel- **und** Mehrfachauswahl je nach `settings.multiProband`, `getSelectedBewSessionIds()`), 19 Bewertungsskalen (1–6), Speichern/Überschreiben (ggf. mehrere Einträge bei Mehrfachauswahl) |
 | INIT | Dateiende | Startsequenz: `load()`, initiales Rendering aller Screens (inkl. `renderSensorik()`), Versionsanzeige |
 
@@ -214,8 +214,9 @@ die CSV-Exportspalten (`app.js`, `btn-export-csv`-Handler).
   Schreibfehler nur pauschal per `try/catch` in `save()` ab und zeigt einen generischen
   Toast — kein differenziertes Verhalten bei Speicherplatzmangel.
 - Keine Datenmigration/Schema-Versionierung für `localStorage`-Inhalte (siehe oben).
-- Sensoriknummer ist hart auf den Bereich 1–12 validiert (`app.js:297`, `app.js:354`) —
-  Änderung dieses Bereichs erfordert Anpassung an beiden Stellen.
+- Sensoriknummer wird nur noch im Bearbeiten-Dialog erfasst und ist dort **optional**; wird
+  eine eingegeben, ist sie hart auf den Bereich 1–12 + Eindeutigkeit validiert
+  (`btn-save-proband-edit`-Handler). Neue Personen bekommen `sensor: ''`.
 - Pseudonym ist hart auf das Format "1 Buchstabe, 4 Zahlen, 3 Buchstaben" (z. B. `P1234ABC`)
   validiert — `PSEUDO_FORMAT_REGEX`/`isValidPseudoFormat()` in `app.js:99–100`. Live-Feedback
   übernimmt `setPseudoFieldValidity()` (`app.js:104–112`): sie markiert das jeweilige
