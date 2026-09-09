@@ -1,19 +1,41 @@
-# StudyLog-V2 — Projektkontext für Claude
+# StudyLog-Mext — Projektkontext für Claude
 
 ## Was ist das
-Progressive Web App zur Durchführung von Studien-Sessions mit Teilnehmenden in VR-Szenarien
-(VR Welt, Verkehrsunfall, Krankenhaus). Mehrere Studienleitungen nutzen die App gleichzeitig auf
-eigenen Smartphones, vollständig offline. Deployment: GitHub Pages.
+Progressive Web App zur Durchführung von Studien-Sessions mit Teilnehmenden in VR-Szenarien.
+Abgeleitet von StudyLog-V2, angepasst für einen speziellen Verwendungszweck mit erweitertem
+Funktionsumfang (siehe "Neue Anforderungen" unten). Mehrere Studienleitungen nutzen die App
+gleichzeitig auf eigenen Smartphones, vollständig offline. Deployment: GitHub Pages
+(Repo: `studylog-mext`).
 
 ## Tech-Stack
 Vanilla HTML/CSS/JS, kein Build-Schritt, keine Frameworks/Dependencies. Datenhaltung
 ausschließlich lokal via `localStorage`. Offline-Fähigkeit über Service Worker (`sw.js`).
+
+## Neue Anforderungen (Abweichungen von StudyLog-V2)
+
+Diese vier Punkte sind der Grund für die Ausgliederung in ein eigenes Repo. Details zur
+Umsetzung (Datenmodell, UI) sind noch offen und werden iterativ mit Claude besprochen.
+
+1. **Neuer Tab "Sensorik"**: Checkliste für Sensorik-Items, jedes Item abhakbar; beim Abhaken
+   wird automatisch ein Timestamp erfasst (wann welche Sensorik angelegt wurde). Analog zum
+   bestehenden Prinzip der Deviation-Tags, aber als eigener Tab mit eigenem Datenmodell.
+2. **VR-Szenario-Ablauf mit Timestamps**: Der Ablauf innerhalb eines Szenarios soll in
+   einzelne Schritte unterteilt und jeweils mit Timestamp abhakbar sein (Erweiterung des
+   bestehenden Session-Timers, der bisher nur Start/Ende eines Szenarios erfasst).
+3. **Trainerbewertungsbogen mehrfach pro Session**: Der bestehende 20-Item-Bewertungsbogen
+   soll nicht mehr einmal pro Session, sondern einmal **pro VR-Szenario** ausgefüllt werden
+   können — d.h. eine Session mit mehreren Szenarien erzeugt mehrere Bewertungsbögen,
+   zugeordnet zu Teilnehmer*in + Szenario.
+4. **Auswahl Links-/Rechtshänder**: Neues Attribut in der Teilnehmendenverwaltung (vermutlich
+   relevant für Sensorplatzierung).
 
 ## Datenschutz (hart, nicht verhandelbar)
 - Keine Daten verlassen das Gerät — kein externer Server, kein Tracking, keine Analytics.
 - Pseudonymisierung nach Art. 4 Nr. 5 DSGVO.
 - Gendergerechte Sprache im UI: "Teilnehmende", nicht "Probanden" (Variablennamen im Code
   dürfen weiterhin `Proband*` heißen — nur sichtbare UI-Texte müssen genderneutral sein).
+- Handedness-Auswahl: keine besondere Sensitivität, aber wie alle Teilnehmendendaten
+  ausschließlich lokal speichern.
 
 ## Nicht verhandelbare Arbeitsregeln
 1. **Strict non-regression**: Änderungen sind rein additiv oder visuell. Bestehende
@@ -32,7 +54,7 @@ Bei **jedem Commit, der Funktionalität/Inhalt ändert** (nicht bei reinen Doku-
 1. `APP_VERSION` in `app.js` hochzählen — Patch (`2.2.1` → `2.2.2`) für Bugfixes/kleine
    Änderungen, Minor (`2.2.x` → `2.3.0`) für neue Features, Major nur nach expliziter Absprache.
 2. `CACHE`-Konstante in `sw.js` synchron auf denselben Wert setzen (z.B.
-   `studylog-v2.2.2`) — erzwingt Invalidierung des alten Service-Worker-Caches.
+   `studylog-mext-v2.3.0`) — erzwingt Invalidierung des alten Service-Worker-Caches.
 3. Die statischen `<span class="app-version">` Platzhalter in `index.html` (aktuell 2x:
    Sidebar-Footer + mobile Topbar) auf denselben Wert setzen — sie werden zusätzlich beim
    Laden per JS aus `APP_VERSION` überschrieben (Zeile mit
@@ -68,4 +90,5 @@ Datenschutz-Bewertung (DSGVO/DSFA) und für neue Entwickler:innen/KI-Modelle ohn
 **Bei jeder Code-Änderung, die Datenerfassung, -speicherung, -übertragung, Architektur oder
 Bedienung betrifft, die passende(n) Datei(en) in `/docs` automatisch mitaktualisieren** —
 ohne dass extra danach gefragt werden muss. Unklare Datenschutz-Aspekte in `DATENFLUSS.md`
-weiterhin mit "TODO: Datenschutz prüfen" markieren.
+weiterhin mit "TODO: Datenschutz prüfen" markieren. **Bei den vier neuen Anforderungen oben
+gilt dasselbe: sobald Umsetzungsdetails feststehen, entsprechende /docs-Dateien ergänzen.**
