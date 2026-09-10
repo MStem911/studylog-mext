@@ -16,7 +16,7 @@
 
 ## Kernfunktionen im Überblick
 
-Die App hat sieben Bereiche, erreichbar über die Navigation (unten auf dem Smartphone, links
+Die App hat acht Bereiche, erreichbar über die Navigation (unten auf dem Smartphone, links
 auf Tablet/Desktop):
 
 | Bereich | Zweck |
@@ -26,6 +26,7 @@ auf Tablet/Desktop):
 | ⏺ **Szenario** | Timer starten/stoppen, Szenario wählen (Tutorial / Hologate / Rollercoaster), Abweichungen/Notizen erfassen. Speichert je Durchlauf eine „Sitzung" (siehe Protokoll) |
 | ☰ **Protokoll** | Übersicht aller gespeicherten Sitzungen, filtern, bearbeiten, löschen |
 | 📝 **Bewertung** | Trainerbewertungsbogen zu einer Sitzung ausfüllen |
+| ❗ **Ereignisse** | Freie Ereignis-/Problemliste (z. B. Sensorik verrutscht) mit Kategorie, Zeitpunkt oder Zeitraum — unabhängig von einer konkreten Sitzung |
 | ↓ **Export** | Daten als CSV/JSON exportieren, Statistiken einsehen |
 | ⚙ **Einstellungen** | App-Verhalten anpassen (z. B. Mehrfachauswahl von Teilnehmenden bei Sitzung **und** Bewertung), alle Daten löschen |
 
@@ -121,7 +122,30 @@ gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
    nach ("Trotzdem speichern?" / "Abbrechen") — so bleibt die unvollständige Bewertung nicht
    versehentlich als vermeintlich fertig stehen.
 
-### 5. Sitzung im Protokoll prüfen oder korrigieren
+### 5. Ereignisse/Probleme erfassen (optional, jederzeit möglich)
+
+1. In den Bereich **❗ Ereignisse** wechseln, z. B. sobald Sensorik abgefallen/verrutscht ist
+   oder ein anderes Problem auffällt.
+2. Optional die betroffene **Teilnehmende:r** im Dropdown wählen — ohne Auswahl gilt das
+   Ereignis als allgemein (kein Personenbezug).
+3. Eine kurze **Beschreibung** eintragen (z. B. "Sensorik verrutscht") und eine **Kategorie**
+   antippen (Standard: Sensorik, VR, Fragebogen, TMS, Sonstiges). Über **⚙ Tags** lassen sich
+   Kategorien umbenennen, löschen oder neue hinzufügen.
+4. **Erfassungsart** wählen:
+   - **🕐 Zeitpunkt** — ein einzelner Moment. Mit **🕐 Jetzt** die aktuelle Uhrzeit
+     übernehmen, oder die Uhrzeit manuell eintragen.
+   - **⏱ Zeitraum** — Start und Ende. Für beide Felder jeweils **🕐 Jetzt** antippen (z. B.
+     einmal beim Auftreten, einmal beim Beheben des Problems) oder die Uhrzeiten manuell
+     eintragen.
+5. Mit **✓ Ereignis speichern** abschließen. Das Ereignis erscheint in der Liste darunter,
+   die sich nach Kategorie und Teilnehmende:r filtern lässt.
+6. Ein fehlerhafter Eintrag lässt sich antippen und nach Sicherheitsabfrage löschen (kein
+   separater Bearbeiten-Dialog — bei Bedarf löschen und neu erfassen).
+
+**Hinweis:** Erfasste Ereignisse sind aktuell **nicht** Teil des CSV-/JSON-Exports — sie
+lassen sich nur innerhalb der App im Tab **Ereignisse** einsehen.
+
+### 6. Sitzung im Protokoll prüfen oder korrigieren
 
 1. Im Bereich **Protokoll** die Liste aller Sitzungen einsehen, bei Bedarf nach Szenario
    oder Person filtern.
@@ -130,7 +154,7 @@ gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
    Notizen nachträglich korrigieren (das Datum selbst ist nicht änderbar).
 4. Über **Sitzung löschen** kann ein fehlerhafter Eintrag entfernt werden.
 
-### 6. Am Ende der Erhebung: Export
+### 7. Am Ende der Erhebung: Export
 
 1. Im Bereich **Export** optional ein **Geräte-/Betreuungslabel** eintragen (hilfreich, wenn
    mehrere Geräte parallel genutzt wurden).
@@ -140,9 +164,9 @@ gespeicherte Aufzeichnung durch die neue Sitzung überschrieben wird.
 4. Die exportierte Datei anschließend gemäß den Vorgaben der Studienleitung sicher
    weitergeben bzw. ablegen (dies erfolgt außerhalb der App).
 5. **Erst nach erfolgreichem Export und Sicherung der Daten:** Falls gewünscht, im Bereich
-   **⚙ Einstellungen** über **⚠ Alle Daten löschen** sämtliche Teilnehmenden-, Sitzungs- und
-   Bewertungsdaten auf diesem Gerät unwiderruflich entfernen. Die App warnt vor dieser
-   Aktion — sie kann nicht rückgängig gemacht werden.
+   **⚙ Einstellungen** über **⚠ Alle Daten löschen** sämtliche Teilnehmenden-, Sitzungs-,
+   Bewertungs- und Ereignisdaten auf diesem Gerät unwiderruflich entfernen. Die App warnt vor
+   dieser Aktion — sie kann nicht rückgängig gemacht werden.
 
 ## Mehrere Geräte
 

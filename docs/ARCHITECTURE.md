@@ -48,21 +48,22 @@ Event-Listener leben in diesem einen Closure-Scope; es gibt keine Module/Imports
 ## Kernkonzept: State + Persistenz
 
 `app.js` hält den gesamten Anwendungszustand in modul-lokalen `let`-Variablen (z. B.
-`probanden`, `sessions`, `scenarios`, `tags`, `bewertungen`, `settings` sowie
-UI-/Timer-State wie `sessionRunning`, `selectedScenId`, `detailSessionId`). Zwei zentrale
-Funktionen synchronisieren diesen State mit `localStorage`:
+`probanden`, `sessions`, `scenarios`, `tags`, `bewertungen`, `events`, `eventTags`, `settings`
+sowie UI-/Timer-State wie `sessionRunning`, `selectedScenId`, `detailSessionId`,
+`selectedEventType`). Zwei zentrale Funktionen synchronisieren diesen State mit
+`localStorage`:
 
-- **`load()`** — beim Start einmal aufgerufen, liest alle sechs
+- **`load()`** — beim Start einmal aufgerufen, liest alle acht
   `localStorage`-Keys, parsed JSON, füllt fehlende/leere Konfigurationslisten
-  (`scenarios`, `tags`) mit Defaults auf und stellt sicher, dass jeder `probanden`-Eintrag
-  ein `sensorik`-Objekt hat. Der frühere globale Key `sl_sensorik` (v2.9.0) wird verworfen
-  (`localStorage.removeItem`).
-- **`save()`** — nach **jeder** datenverändernden Aktion aufgerufen, schreibt alle sechs
+  (`scenarios`, `tags`, `eventTags`) mit Defaults auf und stellt sicher, dass jeder
+  `probanden`-Eintrag ein `sensorik`-Objekt hat. Der frühere globale Key `sl_sensorik`
+  (v2.9.0) wird verworfen (`localStorage.removeItem`).
+- **`save()`** — nach **jeder** datenverändernden Aktion aufgerufen, schreibt alle acht
   State-Variablen zurück in `localStorage`. Kein Debouncing/Batching — jede einzelne
-  Aktion (Person anlegen, Sitzung speichern, Tag umbenennen …) löst einen vollständigen
-  `save()`-Durchlauf aus.
+  Aktion (Person anlegen, Sitzung speichern, Tag umbenennen, Ereignis erfassen …) löst
+  einen vollständigen `save()`-Durchlauf aus.
 
-**Wichtig für Änderungen:** Da `save()` immer alle sechs Keys neu schreibt, reicht es bei
+**Wichtig für Änderungen:** Da `save()` immer alle Keys neu schreibt, reicht es bei
 neuen Feldern, die betroffene State-Variable (z. B. ein Objekt in `probanden`) zu ergänzen —
 es muss keine Migration/Schema-Version gepflegt werden. Es gibt **keine
 Schema-Versionierung** von `localStorage`-Daten; neue Felder müssen daher stets mit
@@ -78,6 +79,8 @@ Schema-Versionierung** von `localStorage`-Daten; neue Felder müssen daher stets
 | `sl_bewertungen` | `bewertungen` | `{ id, sessionId, pseudo, sensor, scenarioId, scenarioName, scenarioAbbr, date, scores: { a1..z20 }, notes, savedAt }` |
 | `sl_scenarios` | `scenarios` | `{ id, name, abbr, icon }` — Default (nur bei leerem `sl_scenarios`): Tutorial / Hologate / Rollercoaster. Über den Szenario-Manager im Szenario-Screen editierbar |
 | `sl_tags` | `tags` | `string[]` — freie Liste von Abweichungs-Bezeichnungen |
+| `sl_events` | `events` | `{ id, type: 'timestamp'\|'duration', tag, probandId, pseudo, note, timeISO?, startISO?, endISO?, duration_s?, createdAt }` — `type` bestimmt, ob `timeISO` (Einzelzeitpunkt) oder `startISO`/`endISO`/`duration_s` (Zeitraum) gefüllt ist; `probandId`/`pseudo` sind optional (leerer String = kein Personenbezug) |
+| `sl_event_tags` | `eventTags` | `string[]` — freie Liste von Ereignis-Kategorien (Default: `DEFAULT_EVENT_TAGS` = Sensorik/VR/Fragebogen/TMS/Sonstiges), analog zu `sl_tags` aber für den Tab „Ereignisse" |
 | `sl_settings` | `settings` | `{ deviceLabel, lastExport, multiProband }` |
 
 **Pausen-Timer (`pauses[]`):** Jeder Eintrag hat die Form `{ startISO, endISO, duration_s }`.
@@ -131,6 +134,23 @@ neu erzeugten Sitzungs-IDs vorbelegt; klickt man im Prompt auf "Ja", werden dies
 Bewertungsscreen automatisch vorausgewählt (Mehrfachauswahl-Modus) bzw. die einzelne Sitzung im
 Dropdown vorausgewählt (Einzel-Modus).
 
+**Ereignisse (Tab „Ereignisse", `sl_events`):** Eigenständiges, von Sitzungen unabhängiges
+Log für Ereignisse/Probleme (z. B. „Sensorik verrutscht"). Jeder Eintrag hat entweder
+`type: 'timestamp'` (ein Zeitpunkt, `timeISO`) oder `type: 'duration'` (Zeitraum,
+`startISO`/`endISO`/`duration_s`) — umschaltbar über zwei Toggle-Buttons
+(`#event-type-timestamp`/`#event-type-duration`, State-Variable `selectedEventType`),
+beide Erfassungsarten füllbar per „Jetzt"-Button (`.btn-time-now`, wie bei den
+Sensorik-Zeiten der Teilnehmenden) oder manueller Eingabe im `<input type="time">`. Ein
+optionaler Bezug zu einer Person (`probandId`/`pseudo`, wie bei `sessions` als Kopie
+hinterlegt) ist möglich, aber nicht Pflicht — ein Ereignis kann auch allgemein (ohne
+Personenbezug) erfasst werden. Kategorisierung erfolgt über `eventTags`
+(`renderEventTagRow()`) — im Unterschied zur Mehrfachauswahl der Abweichungs-Tags bei
+Sitzungen (`renderTagRow()`) ist hier bewusst **Einfachauswahl** implementiert (genau eine
+Kategorie pro Ereignis, dient primär dem Filtern/Sortieren der Liste). Löschen einzelner
+Ereignisse erfolgt per Klick auf den Listeneintrag + `showConfirm()`, es gibt **keine**
+Bearbeiten-Funktion (Korrektur = Löschen + Neuanlage). Ereignisse sind aktuell **nicht**
+Teil des CSV-/JSON-Exports (siehe [DATENFLUSS.md](./DATENFLUSS.md)).
+
 ## Modul-Verantwortlichkeiten in `app.js` (in Dateireihenfolge)
 
 | Abschnitt (Kommentar-Marker im Code) | Zeilen (ca.) | Verantwortlichkeit |
@@ -147,6 +167,7 @@ Dropdown vorausgewählt (Einzel-Modus).
 | EXPORT | 1034–1145 | Statistiken, CSV-/JSON-Export, Geräte-Label |
 | EINSTELLUNGEN | ~1195 | `renderSettingsScreen()`, Toggle "Mehrere Teilnehmende gleichzeitig" (`settings.multiProband`), "Alle Daten löschen" (`btn-clear-data`; leert `probanden` inkl. `p.sensorik`) |
 | BEWERTUNGSBOGEN | 1157–1410 | Post-Session-Prompt (inkl. Vorschlag zur gemeinsamen Bewertung bei mehreren Teilnehmenden), Sitzungsauswahl (Einzel- **und** Mehrfachauswahl je nach `settings.multiProband`, `getSelectedBewSessionIds()`), 19 Bewertungsskalen (1–6), Speichern/Überschreiben (ggf. mehrere Einträge bei Mehrfachauswahl) |
+| EREIGNISSE | nach BEWERTUNGSBOGEN | Formular für neue Ereignisse (optionaler Personenbezug, Kategorie-Einfachauswahl, Zeitpunkt-/Zeitraum-Umschalter je mit „Jetzt"-Button), Liste mit Filtern (Kategorie/Person), Löschen per Klick + `showConfirm()`, eigener Kategorien-Manager (`renderEventTagManager()`, analog zum Tag-Manager der Sitzungsaufzeichnung) |
 | INIT | Dateiende | Startsequenz: `load()`, initiales Rendering aller Screens (inkl. `renderSensorik()`), Versionsanzeige |
 
 ## Konventionen im Code
@@ -239,6 +260,12 @@ die CSV-Exportspalten (`app.js`, `btn-export-csv`-Handler).
 - Zwei vermutliche Backup-/Debug-Dateien im Repo-Root (`debug.html`, `download`, siehe oben)
   sind nicht Teil der App und sollten bei größerer Aufräumarbeit hinterfragt, aber nicht
   ungefragt gelöscht werden.
+- **Ereignisse (`sl_events`) sind nicht Teil des CSV-/JSON-Exports** — sie lassen sich
+  aktuell nur innerhalb der App (Tab „Ereignisse", mit Filtern) einsehen, nicht über den
+  Export-Screen mit auswerten.
+- Für Ereignisse gibt es **keine Bearbeiten-Funktion** — anders als bei Sitzungen
+  (`btn-edit-session`) kann ein fehlerhafter Ereignis-Eintrag nur gelöscht und neu angelegt
+  werden.
 
 ## Offene TODOs
 

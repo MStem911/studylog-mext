@@ -63,7 +63,7 @@ Sensorik an-/abgelegt wurde) — nicht die Rohdaten des Sensors selbst. Details 
 flowchart TB
     subgraph Device["Gerät der Studienleitung (Smartphone/Tablet/Desktop)"]
         direction TB
-        UI["index.html + style.css<br/>(UI-Schicht: 7 Screens, Overlays/Dialoge)"]
+        UI["index.html + style.css<br/>(UI-Schicht: 8 Screens, Overlays/Dialoge)"]
         Logic["app.js<br/>(Anwendungslogik, In-Memory-State,<br/>Rendering, Validierung)"]
         LS[("localStorage<br/>(persistenter Datenspeicher)")]
         SW["sw.js (Service Worker)<br/>Cache für App-Shell (HTML/CSS/JS/Icons)"]
@@ -90,7 +90,7 @@ einem Gerät wegzubekommen, ist der manuelle CSV/JSON-Export (siehe
 
 | Datei | Rolle |
 |---|---|
-| `index.html` | App-Shell: alle 7 Screens (Teilnehmende, Sensorik, Szenario [Screen-ID `session`], Protokoll, Bewertung, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
+| `index.html` | App-Shell: alle 8 Screens (Teilnehmende, Sensorik, Szenario [Screen-ID `session`], Protokoll, Bewertung, Ereignisse, Export, Einstellungen) sowie alle Overlays/Dialoge als statisches Markup, anfangs versteckt (`.hidden`) |
 | `style.css` | Dark-Mode-Design, responsives Layout (Sidebar auf Desktop/Tablet, Bottom-Nav auf Mobile) |
 | `app.js` | Gesamte Anwendungslogik: State-Verwaltung, Persistenz (`localStorage`), Rendering aller Screens, Event-Handling, Export |
 | `sw.js` | Service Worker: cached die App-Shell-Dateien für Offline-Nutzung, Cache-Invalidierung über Versionsnummer |

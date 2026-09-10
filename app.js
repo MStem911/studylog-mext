@@ -3,7 +3,7 @@
 // ── App Version (Single Source of Truth) ───────────────────────────────────
 // Bei jeder inhaltlichen Änderung Patch-Version erhöhen (z.B. 2.2.1 -> 2.2.2).
 // sw.js CACHE-Name manuell synchron mitziehen, damit alte Caches invalidiert werden.
-const APP_VERSION = '2.11.1';
+const APP_VERSION = '2.12.0';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -15,6 +15,8 @@ const KEY_SCENARIOS  = 'sl_scenarios';
 const KEY_TAGS       = 'sl_tags';
 const KEY_BEWERTUNGEN = 'sl_bewertungen';
 const KEY_SENSORIK   = 'sl_sensorik';
+const KEY_EVENTS      = 'sl_events';
+const KEY_EVENT_TAGS  = 'sl_event_tags';
 
 const DEFAULT_SCENARIOS = [
   { id: 'sc_tut',  name: 'Tutorial',     abbr: 'TUT', icon: '🎓' },
@@ -41,6 +43,10 @@ const DEFAULT_TAGS = [
   'Szenario wiederholt',
 ];
 
+// Kategorien für den Tab "Ereignisse" — eigene, frei erweiterbare Liste (getrennt von
+// den Abweichungs-Tags der Sitzungsaufzeichnung, da inhaltlich andere Bedeutung).
+const DEFAULT_EVENT_TAGS = ['Sensorik', 'VR', 'Fragebogen', 'TMS', 'Sonstiges'];
+
 // ── State ────────────────────────────────────────────────────────────────────
 let probanden        = [];
 let sessions         = [];
@@ -48,6 +54,9 @@ let settings         = { deviceLabel: '', lastExport: null, multiProband: false 
 let scenarios        = [];
 let tags             = [];
 let bewertungen      = [];
+let events            = [];
+let eventTags         = [];
+let selectedEventType = 'timestamp';
 let selectedSensorikProbandId = '';
 let selectedScenId   = '';
 let selectedProbandIds = [];
@@ -76,6 +85,8 @@ function save() {
     localStorage.setItem(KEY_SCENARIOS,   JSON.stringify(scenarios));
     localStorage.setItem(KEY_TAGS,        JSON.stringify(tags));
     localStorage.setItem(KEY_BEWERTUNGEN, JSON.stringify(bewertungen));
+    localStorage.setItem(KEY_EVENTS,      JSON.stringify(events));
+    localStorage.setItem(KEY_EVENT_TAGS,  JSON.stringify(eventTags));
   } catch(e) { showToast('⚠ Speicherfehler'); }
 }
 
@@ -87,10 +98,15 @@ function load() {
     const sc = localStorage.getItem(KEY_SCENARIOS);
     const tg = localStorage.getItem(KEY_TAGS);
     const bw = localStorage.getItem(KEY_BEWERTUNGEN);
+    const ev = localStorage.getItem(KEY_EVENTS);
+    const evt = localStorage.getItem(KEY_EVENT_TAGS);
     if (p)  probanden   = JSON.parse(p);
     if (s)  sessions    = JSON.parse(s);
     if (st) settings    = { ...settings, ...JSON.parse(st) };
     if (bw) bewertungen = JSON.parse(bw);
+    if (ev) events      = JSON.parse(ev);
+    eventTags = evt ? JSON.parse(evt) : [...DEFAULT_EVENT_TAGS];
+    if (!eventTags.length) eventTags = [...DEFAULT_EVENT_TAGS];
     // Sensorik wird pro Person in p.sensorik geführt; für Alt-Daten sicherstellen, dass
     // das Objekt existiert. Der frühere globale Key sl_sensorik (v2.9.0) wird verworfen.
     probanden.forEach(pr => { if (!pr.sensorik || typeof pr.sensorik !== 'object') pr.sensorik = {}; });
@@ -102,6 +118,7 @@ function load() {
   } catch(e) {
     scenarios = deepCopy(DEFAULT_SCENARIOS);
     tags = [...DEFAULT_TAGS];
+    eventTags = [...DEFAULT_EVENT_TAGS];
   }
 }
 
@@ -203,6 +220,7 @@ const PAGE_TITLES = {
   session:   'Szenario aufzeichnen',
   log:       'Protokoll',
   bewertung: 'Trainerbewertungsbogen',
+  ereignisse:'Ereignisse',
   export:    'Export',
   settings:  'Einstellungen',
 };
@@ -228,6 +246,7 @@ function showScreen(name) {
   if (name === 'export')    renderExport();
   if (name === 'probanden') renderProbanden();
   if (name === 'bewertung') renderBewertungScreen();
+  if (name === 'ereignisse')renderEreignisse();
   if (name === 'settings')  renderSettingsScreen();
 }
 
@@ -392,6 +411,7 @@ document.getElementById('btn-save-proband-edit').addEventListener('click', () =>
   const sensorAbgelegtISO = abRaw ? rebuildISO(baseAb, abRaw) : null;
   probanden[idx] = { ...probanden[idx], pseudo, sensor, note, handedness, sensorAngelegtISO, sensorAbgelegtISO };
   sessions = sessions.map(s => s.probandId === editingProbandId ? { ...s, pseudo, sensor } : s);
+  events   = events.map(e => e.probandId === editingProbandId ? { ...e, pseudo } : e);
   save();
   closeProbandEdit();
   renderProbanden(document.getElementById('search-input').value);
@@ -1267,12 +1287,12 @@ function recordExport() {
 }
 document.getElementById('btn-clear-data').addEventListener('click', () => {
   showConfirm('⚠ Alle Daten löschen',
-    'Alle Teilnehmenden (inkl. erfasster Sensorik-Zeitpunkte), Sitzungsdaten und Bewertungen werden unwiderruflich gelöscht. Vorher exportieren!',
+    'Alle Teilnehmenden (inkl. erfasster Sensorik-Zeitpunkte), Sitzungsdaten, Bewertungen und erfassten Ereignisse werden unwiderruflich gelöscht. Vorher exportieren!',
     () => {
-      probanden = []; sessions = []; bewertungen = []; settings.lastExport = null;
+      probanden = []; sessions = []; bewertungen = []; events = []; settings.lastExport = null;
       selectedProbandIds = []; selectedBewSessionIds = []; pendingBewertungSessionIds = [];
       selectedSensorikProbandId = '';
-      save(); renderProbanden(); renderLog(); renderExport(); renderSensorik();
+      save(); renderProbanden(); renderLog(); renderExport(); renderSensorik(); renderEreignisse();
       showToast('Alle Daten gelöscht');
     });
 });
@@ -1541,6 +1561,241 @@ function resetBewertungForm() {
   document.getElementById('bew-notes').value = '';
   showToast('Eingaben zurückgesetzt');
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EREIGNISSE
+// ══════════════════════════════════════════════════════════════════════════════
+// Freie Ereignis-/Problemliste (z.B. "Sensorik verrutscht"), unabhängig von Sitzungen.
+// Zwei Erfassungsarten: einzelner Zeitpunkt (timeISO) oder Zeitraum (startISO/endISO),
+// jeweils per "Jetzt"-Button oder manueller Eingabe. Kategorisierung über eine frei
+// erweiterbare Tag-Liste (eventTags), analog zum Tag-Manager der Sitzungsaufzeichnung,
+// aber als eigenständige Liste (Kategorien haben andere Bedeutung als Abweichungs-Tags).
+
+function renderEreignisse() {
+  buildEventProbandSelect();
+  renderEventTagRow('event-tags');
+  setEventType(selectedEventType);
+  renderEventList();
+}
+
+function buildEventProbandSelect() {
+  const sel = document.getElementById('event-proband-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— kein Bezug —</option>' +
+    probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}${p.sensor ? '  ·  SNR ' + esc(p.sensor) : ''}</option>`).join('');
+  if (probanden.some(p => p.id === cur)) sel.value = cur;
+}
+
+// Kategorie-Auswahl: im Unterschied zu renderTagRow() ist hier immer nur ein Tag aktiv
+// (Einfachauswahl), da die Kategorie primär dem Sortieren/Filtern dient.
+function renderEventTagRow(containerId, selectedTag = null) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = eventTags.map(tag => `
+    <button type="button" class="tag${tag === selectedTag ? ' active' : ''}" data-tag="${esc(tag)}">${esc(tag)}</button>
+  `).join('');
+  container.querySelectorAll('.tag').forEach(btn =>
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.tag').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    })
+  );
+}
+function getActiveEventTag(containerId) {
+  const active = document.querySelector(`#${containerId} .tag.active`);
+  return active ? active.dataset.tag : '';
+}
+
+function setEventType(type) {
+  selectedEventType = type;
+  document.getElementById('event-type-timestamp').classList.toggle('selected', type === 'timestamp');
+  document.getElementById('event-type-duration').classList.toggle('selected', type === 'duration');
+  document.getElementById('event-timestamp-fields').classList.toggle('hidden', type !== 'timestamp');
+  document.getElementById('event-duration-fields').classList.toggle('hidden', type !== 'duration');
+}
+document.getElementById('event-type-timestamp').addEventListener('click', () => setEventType('timestamp'));
+document.getElementById('event-type-duration').addEventListener('click', () => setEventType('duration'));
+
+document.getElementById('btn-save-event').addEventListener('click', () => {
+  const probandId = document.getElementById('event-proband-select').value;
+  const p     = probanden.find(x => x.id === probandId);
+  const note  = document.getElementById('event-note').value.trim();
+  const tag   = getActiveEventTag('event-tags');
+  if (!note) { showToast('⚠ Beschreibung eingeben'); return; }
+  if (!tag)  { showToast('⚠ Kategorie wählen'); return; }
+
+  const entry = {
+    id: uid(), type: selectedEventType, tag,
+    probandId: probandId || '', pseudo: p ? p.pseudo : '',
+    note, createdAt: new Date().toISOString()
+  };
+  const nowISO = new Date().toISOString();
+
+  if (selectedEventType === 'duration') {
+    const startTime = document.getElementById('event-start-time').value;
+    const endTime   = document.getElementById('event-end-time').value;
+    if (!startTime) { showToast('⚠ Startzeit eingeben'); return; }
+    if (!endTime)   { showToast('⚠ Endzeit eingeben'); return; }
+    entry.startISO = rebuildISO(nowISO, startTime);
+    entry.endISO   = rebuildISO(nowISO, endTime);
+    if (new Date(entry.endISO) < new Date(entry.startISO)) { showToast('⚠ Ende muss nach Start liegen'); return; }
+    entry.duration_s = Math.round((new Date(entry.endISO) - new Date(entry.startISO)) / 1000);
+  } else {
+    const time = document.getElementById('event-time').value;
+    if (!time) { showToast('⚠ Zeitpunkt eingeben'); return; }
+    entry.timeISO = rebuildISO(nowISO, time);
+  }
+
+  events.push(entry);
+  save();
+  document.getElementById('event-note').value = '';
+  document.getElementById('event-time').value = '';
+  document.getElementById('event-start-time').value = '';
+  document.getElementById('event-end-time').value = '';
+  renderEventTagRow('event-tags');
+  renderEventList();
+  showToast('✓ Ereignis gespeichert');
+});
+
+function buildEventFilters() {
+  const tagSel = document.getElementById('event-filter-tag');
+  const prSel  = document.getElementById('event-filter-proband');
+  const tagVal = tagSel.value;
+  const prVal  = prSel.value;
+  tagSel.innerHTML = '<option value="all">Alle Kategorien</option>' +
+    eventTags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  prSel.innerHTML = '<option value="all">Alle Teilnehmenden</option>' +
+    probanden.map(p => `<option value="${esc(p.id)}">${esc(p.pseudo)}</option>`).join('');
+  if (eventTags.includes(tagVal)) tagSel.value = tagVal;
+  if (probanden.find(p => p.id === prVal)) prSel.value = prVal;
+}
+
+function getFilteredEvents() {
+  const tagVal = document.getElementById('event-filter-tag').value;
+  const prVal  = document.getElementById('event-filter-proband').value;
+  return events
+    .filter(e => (tagVal === 'all' || e.tag === tagVal) && (prVal === 'all' || e.probandId === prVal))
+    .slice().reverse();
+}
+
+function renderEventList() {
+  buildEventFilters();
+  const list     = document.getElementById('event-list');
+  const empty    = document.getElementById('event-empty');
+  const label    = document.getElementById('event-count-label');
+  const filtered = getFilteredEvents();
+  label.textContent = `EREIGNISSE (${filtered.length})`;
+  if (!filtered.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = filtered.map(ev => {
+    const timeInfo = ev.type === 'duration'
+      ? localTimeStr(ev.startISO) + ' – ' + localTimeStr(ev.endISO) + '  ·  ' + formatTime(ev.duration_s || 0)
+      : localTimeStr(ev.timeISO);
+    const who = ev.pseudo || 'Allgemein';
+    return `<button class="log-entry" data-id="${esc(ev.id)}">
+      <div class="log-row-top">
+        <span class="log-id">${esc(ev.tag)}  ·  ${esc(who)}</span>
+        <span class="log-time">${esc(timeInfo)}</span>
+      </div>
+      <div class="log-meta">${esc(ev.note)}</div>
+    </button>`;
+  }).join('');
+  list.querySelectorAll('.log-entry').forEach(el =>
+    el.addEventListener('click', () => confirmDeleteEvent(el.dataset.id))
+  );
+}
+
+function confirmDeleteEvent(id) {
+  const ev = events.find(x => x.id === id);
+  if (!ev) return;
+  showConfirm('Ereignis löschen', `„${ev.note}" (${ev.tag}) löschen?`, () => {
+    events = events.filter(x => x.id !== id);
+    save();
+    renderEventList();
+    showToast('Ereignis gelöscht');
+  });
+}
+
+document.getElementById('event-filter-tag').addEventListener('change', renderEventList);
+document.getElementById('event-filter-proband').addEventListener('change', renderEventList);
+
+// ── Ereignis-Kategorien-Manager ─────────────────────────────────────────────────
+document.getElementById('btn-manage-event-tags').addEventListener('click', () => {
+  renderEventTagManager();
+  document.getElementById('event-tag-overlay').classList.remove('hidden');
+});
+document.getElementById('event-tag-close').addEventListener('click', () => {
+  document.getElementById('event-tag-overlay').classList.add('hidden');
+  renderEventTagRow('event-tags');
+  buildEventFilters();
+});
+document.getElementById('event-tag-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('event-tag-overlay')) {
+    document.getElementById('event-tag-overlay').classList.add('hidden');
+    renderEventTagRow('event-tags');
+    buildEventFilters();
+  }
+});
+
+function renderEventTagManager() {
+  const list = document.getElementById('event-tag-list-modal');
+  if (!eventTags.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">Keine Kategorien</div>';
+    return;
+  }
+  list.innerHTML = eventTags.map((tag, i) => `
+    <div class="scenario-manager-item" data-idx="${i}">
+      <div class="sm-info"><div class="sm-name">${esc(tag)}</div></div>
+      <div class="sm-btns">
+        <button class="sm-btn" data-action="edit" data-idx="${i}">✏</button>
+        <button class="sm-btn del" data-action="del" data-idx="${i}">✕</button>
+      </div>
+    </div>
+    <div class="tag-edit-row hidden" id="event-tag-edit-row-${i}">
+      <input type="text" class="tag-edit-input" id="event-tag-edit-input-${i}" value="${esc(tag)}" autocorrect="off">
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn btn-primary flex-1" data-action="save" data-idx="${i}">✓ Speichern</button>
+        <button class="btn btn-ghost" data-action="cancel-edit" data-idx="${i}">Abbrechen</button>
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('[data-action]').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const idx    = parseInt(btn.dataset.idx, 10);
+      const action = btn.dataset.action;
+      if (action === 'del') {
+        if (eventTags.length <= 1) { showToast('⚠ Mindestens 1 Kategorie'); return; }
+        showConfirm('Kategorie löschen', `"${eventTags[idx]}" löschen?`, () => {
+          eventTags.splice(idx, 1); save(); renderEventTagManager();
+        });
+      } else if (action === 'edit') {
+        document.getElementById(`event-tag-edit-row-${idx}`).classList.remove('hidden');
+        document.getElementById(`event-tag-edit-input-${idx}`).focus();
+      } else if (action === 'cancel-edit') {
+        document.getElementById(`event-tag-edit-row-${idx}`).classList.add('hidden');
+      } else if (action === 'save') {
+        const val = document.getElementById(`event-tag-edit-input-${idx}`).value.trim();
+        if (!val) { showToast('⚠ Bezeichnung eingeben'); return; }
+        if (eventTags.some((t,i) => i !== idx && t.toLowerCase() === val.toLowerCase())) { showToast('⚠ Kategorie vergeben'); return; }
+        eventTags[idx] = val; save(); renderEventTagManager();
+        showToast('✓ Kategorie aktualisiert');
+      }
+    })
+  );
+}
+
+document.getElementById('btn-add-event-tag').addEventListener('click', () => {
+  const val = document.getElementById('new-event-tag-label').value.trim();
+  if (!val) { showToast('⚠ Bezeichnung eingeben'); return; }
+  if (eventTags.some(t => t.toLowerCase() === val.toLowerCase())) { showToast('⚠ Kategorie vergeben'); return; }
+  eventTags.push(val); save();
+  document.getElementById('new-event-tag-label').value = '';
+  renderEventTagManager();
+  showToast('✓ Kategorie hinzugefügt');
+});
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 load();

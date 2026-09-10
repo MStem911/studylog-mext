@@ -45,6 +45,10 @@
         <span class="nav-icon">📝</span>
         <span class="nav-label">Bewertung</span>
       </button>
+      <button class="nav-item" data-screen="ereignisse">
+        <span class="nav-icon">❗</span>
+        <span class="nav-label">Ereignisse</span>
+      </button>
       <button class="nav-item" data-screen="export">
         <span class="nav-icon">↓</span>
         <span class="nav-label">Export</span>
@@ -55,7 +59,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <span class="app-version">v2.11.1</span>
+      <span class="app-version">v2.12.0</span>
       <span class="lock-icon">🔒</span>
     </div>
   </aside>
@@ -73,7 +77,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <span class="app-version">v2.11.1</span>
+        <span class="app-version">v2.12.0</span>
         <span class="lock-icon">🔒</span>
       </div>
     </header>
@@ -332,6 +336,76 @@
         </div>
       </section>
 
+      <!-- ── Ereignisse ── -->
+      <section class="screen" id="screen-ereignisse">
+        <div class="screen-inner">
+          <div class="card">
+            <div class="card-label-row">
+              <span class="card-label" style="margin-bottom:0">NEUES EREIGNIS</span>
+              <button class="btn-text" id="btn-manage-event-tags">⚙ Tags</button>
+            </div>
+            <label class="field-label" for="event-proband-select">Teilnehmende:r (optional)</label>
+            <select id="event-proband-select" class="field-select">
+              <option value="">— kein Bezug —</option>
+            </select>
+            <label class="field-label" for="event-note">Beschreibung</label>
+            <input type="text" id="event-note" placeholder="z.B. Sensorik verrutscht" autocorrect="off">
+            <label class="field-label">Kategorie</label>
+            <div class="tag-row" id="event-tags"></div>
+
+            <label class="field-label">Erfassungsart</label>
+            <div class="scenario-grid event-type-row">
+              <button type="button" class="scenario-btn" id="event-type-timestamp" data-type="timestamp">
+                <span class="sc-icon">🕐</span><span>Zeitpunkt</span>
+              </button>
+              <button type="button" class="scenario-btn" id="event-type-duration" data-type="duration">
+                <span class="sc-icon">⏱</span><span>Zeitraum</span>
+              </button>
+            </div>
+
+            <div id="event-timestamp-fields">
+              <label class="field-label" for="event-time">Zeitpunkt</label>
+              <div class="time-capture-row">
+                <input type="time" id="event-time" step="1">
+                <button type="button" class="btn btn-ghost btn-time-now" data-target="event-time">🕐 Jetzt</button>
+              </div>
+            </div>
+
+            <div id="event-duration-fields" class="hidden">
+              <div class="edit-row-2">
+                <div>
+                  <label class="field-label" for="event-start-time">Start</label>
+                  <div class="time-capture-row">
+                    <input type="time" id="event-start-time" step="1">
+                    <button type="button" class="btn btn-ghost btn-time-now" data-target="event-start-time">🕐 Jetzt</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label" for="event-end-time">Ende</label>
+                  <div class="time-capture-row">
+                    <input type="time" id="event-end-time" step="1">
+                    <button type="button" class="btn btn-ghost btn-time-now" data-target="event-end-time">🕐 Jetzt</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary full-width" id="btn-save-event" style="margin-top:14px">✓ Ereignis speichern</button>
+          </div>
+
+          <div class="filter-row">
+            <select id="event-filter-tag" class="field-select small-select"><option value="all">Alle Kategorien</option></select>
+            <select id="event-filter-proband" class="field-select small-select"><option value="all">Alle Teilnehmenden</option></select>
+          </div>
+          <div class="section-label" id="event-count-label">EREIGNISSE</div>
+          <div id="event-list" class="item-list log-grid"></div>
+          <div id="event-empty" class="empty-state hidden">
+            <div class="empty-icon">❗</div>
+            <div class="empty-text">Noch keine Ereignisse erfasst</div>
+          </div>
+        </div>
+      </section>
+
       <!-- ── Export ── -->
       <section class="screen" id="screen-export">
         <div class="screen-inner">
@@ -398,6 +472,7 @@
       <button class="nav-btn" data-screen="session"><span class="nav-icon">⏺</span><span class="nav-label">Szenario</span></button>
       <button class="nav-btn" data-screen="log"><span class="nav-icon">☰</span><span class="nav-label">Protokoll</span></button>
       <button class="nav-btn" data-screen="bewertung"><span class="nav-icon">📝</span><span class="nav-label">Bewertung</span></button>
+      <button class="nav-btn" data-screen="ereignisse"><span class="nav-icon">❗</span><span class="nav-label">Ereignisse</span></button>
       <button class="nav-btn" data-screen="export"><span class="nav-icon">↓</span><span class="nav-label">Export</span></button>
       <button class="nav-btn" data-screen="settings"><span class="nav-icon">⚙</span><span class="nav-label">Einstellungen</span></button>
     </nav>
@@ -592,6 +667,23 @@
         <label class="field-label" for="new-tag-label">Bezeichnung</label>
         <input type="text" id="new-tag-label" placeholder="z.B. Sichtprobleme" autocorrect="off">
         <button class="btn btn-primary full-width" id="btn-add-tag" style="margin-top:10px">+ Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ereignis-Tag Manager -->
+  <div id="event-tag-overlay" class="overlay hidden">
+    <div class="dialog-box wide">
+      <div class="detail-header">
+        <div class="dialog-title">Kategorien verwalten</div>
+        <button class="btn-icon-sm" id="event-tag-close" aria-label="Schließen">✕</button>
+      </div>
+      <div id="event-tag-list-modal" class="detail-content"></div>
+      <div class="card" style="margin-top:12px;background:var(--surface3)">
+        <div class="card-label">NEUE KATEGORIE</div>
+        <label class="field-label" for="new-event-tag-label">Bezeichnung</label>
+        <input type="text" id="new-event-tag-label" placeholder="z.B. Technik" autocorrect="off">
+        <button class="btn btn-primary full-width" id="btn-add-event-tag" style="margin-top:10px">+ Hinzufügen</button>
       </div>
     </div>
   </div>

@@ -34,6 +34,7 @@ flowchart LR
         I5["Trainerbewertungsbogen<br/>(19 Skalenwerte 1–6 + Freitext)"]
         I6["Geräte-/Betreuungslabel (Freitext)"]
         I7["Sensorik-Checkliste je Teilnehmende:r:<br/>pro Item (Shimmer ECG, Shimmer GSR+,<br/>Polar Brustgurt, Garmin) Zeitstempel 'angelegt'<br/>(Gerätezeit) — Teil von sl_probanden"]
+        I8["Ereignisse/Probleme (Tab 'Ereignisse'):<br/>Kategorie, Freitext-Beschreibung, optionaler<br/>Bezug zu Teilnehmende:r, Zeitpunkt ODER<br/>Start-/Endzeit (Gerätezeit, Button 'Jetzt'<br/>oder manuelle Eingabe)"]
     end
 
     subgraph Process["Verarbeitung — client-seitig, im Browser (app.js)"]
@@ -58,7 +59,7 @@ flowchart LR
         D4["Browser-/App-Daten löschen<br/>oder App deinstallieren (außerhalb der App)"]
     end
 
-    I1 & I2 & I3 & I4 & I5 & I6 & I7 --> P1
+    I1 & I2 & I3 & I4 & I5 & I6 & I7 & I8 --> P1
     P1 <--> S1
     P1 --> T1 --> T3
     P1 --> T2 --> T3
@@ -85,8 +86,9 @@ organisatorisch (nicht technisch) geregelt und für die DSFA dokumentiert werden
 
 ## Datentypen im Detail
 
-Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_probanden`,
-`sl_sessions`, `sl_settings`, `sl_scenarios`, `sl_tags`, `sl_bewertungen`).
+Gespeichert wird in acht getrennten `localStorage`-Einträgen (Keys `sl_probanden`,
+`sl_sessions`, `sl_settings`, `sl_scenarios`, `sl_tags`, `sl_bewertungen`, `sl_events`,
+`sl_event_tags`).
 
 | Datentyp | Felder (Auszug) | Zweck | Rechtsgrundlage | Speicherort | Aufbewahrungsdauer | Verantwortlichkeit |
 |---|---|---|---|---|---|---|
@@ -94,9 +96,10 @@ Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_proband
 | **Sitzungsprotokolle** (`sl_sessions`) | Verweis auf Teilnehmende:n (Pseudonym+Sensoriknummer als Kopie), gewähltes Szenario, Start-/Endzeitpunkt (ISO 8601), aktive Dauer, Pausen (je Start-/Endzeitpunkt + Dauer, beliebig oft pro Sitzung), Abweichungs-Tags, Freitextnotizen, Gerätelabel | Nachvollziehbarkeit des Sitzungsablaufs inkl. Unterbrechungen, Basis für Auswertung/Export | TODO: Datenschutz prüfen | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Trainerbewertungsbogen** (`sl_bewertungen`) | Verweis auf Sitzung, 19 Skalenwerte (Schulnoten-Skala 1–6) zu Leistungsdimensionen (u. a. Lageerkundung, Entscheidungsqualität, Führung/Kommunikation, MANV-Erkennung), Freitextanmerkungen | Strukturierte Leistungsbewertung der Teilnehmenden im Szenario | TODO: Datenschutz prüfen — Bewertungsdaten zu einer identifizierbaren (wenn auch pseudonymisierten) Person können besonders schutzwürdig sein | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Sensorik-Zeiten & -Checkliste** (Teil von `sl_probanden`) | Uhrzeit "Sensorik angelegt" / "Sensorik abgelegt" sowie die Sensorik-Checkliste (`p.sensorik`: pro Item Shimmer ECG / Shimmer GSR+ / Polar Brustgurt / Garmin ein Zeitstempel „angelegt am"). Alles manuell erfasst, **keine** Rohsensordaten. Personenbezug über die Zuordnung zum pseudonymisierten Datensatz | Dokumentation des Sensorhandlings im Studienablauf je Person | TODO: Datenschutz prüfen | `localStorage`, lokal | Unbegrenzt, bis manuelle Löschung (Item-Reset im Tab, Person löschen oder "Alle Daten löschen") | Jeweilige Studienleitung / Gerätebesitzer:in |
-| **Szenario- & Tag-Konfiguration** (`sl_scenarios`, `sl_tags`) | Name/Abkürzung/Icon der Szenarien, Liste möglicher Abweichungs-Tags | App-Konfiguration, keine Personenbezug | Nicht personenbezogen | `localStorage`, lokal | Unbegrenzt (wird von "Alle Daten löschen" **nicht** erfasst) | Jeweilige Studienleitung / Gerätebesitzer:in |
+| **Ereignisse** (`sl_events`) | Kategorie (Tag), Freitext-Beschreibung, optionaler Verweis auf Teilnehmende:n (Pseudonym als Kopie, oder ohne Personenbezug), entweder ein Zeitpunkt (`timeISO`) oder ein Zeitraum (`startISO`/`endISO`/`duration_s`), Erstellungszeitpunkt | Dokumentation von Ereignissen/Problemen während der Studiendurchführung (z. B. Sensorik verrutscht), unabhängig von einer konkreten Sitzung | TODO: Datenschutz prüfen | `localStorage`, lokal auf dem jeweiligen Gerät | Unbegrenzt, bis manuelle Löschung (einzeln oder "Alle Daten löschen") | Jeweilige Studienleitung / Gerätebesitzer:in |
+| **Szenario-, Tag- & Ereigniskategorie-Konfiguration** (`sl_scenarios`, `sl_tags`, `sl_event_tags`) | Name/Abkürzung/Icon der Szenarien, Liste möglicher Abweichungs-Tags, Liste möglicher Ereignis-Kategorien (Default: Sensorik, VR, Fragebogen, TMS, Sonstiges) | App-Konfiguration, keine Personenbezug | Nicht personenbezogen | `localStorage`, lokal | Unbegrenzt (wird von "Alle Daten löschen" **nicht** erfasst) | Jeweilige Studienleitung / Gerätebesitzer:in |
 | **Einstellungen** (`sl_settings`) | Geräte-/Betreuungslabel (Freitext), Zeitpunkt letzter Export, Ein/Aus-Schalter "Mehrere Teilnehmende gleichzeitig" (`multiProband`) | App-Konfiguration und Exportnachweis | Nicht personenbezogen (kann ggf. Namen enthalten, falls Studienleitung sich selbst dort einträgt) | `localStorage`, lokal | Unbegrenzt (wird von "Alle Daten löschen" **nicht** erfasst) | Jeweilige Studienleitung / Gerätebesitzer:in |
-| **Export-Dateien** (CSV/JSON) | Kombination aller obigen personenbezogenen Felder inkl. Bewertungswerte | Zusammenführung/Auswertung mehrerer Geräte nach Studienabschluss | TODO: Datenschutz prüfen | Dateisystem des Geräts (Download-Ordner), danach außerhalb der App-Kontrolle | Unbestimmt — liegt außerhalb der App | TODO: Datenschutz prüfen — vermutlich Studienleitung/Institution |
+| **Export-Dateien** (CSV/JSON) | Kombination aller obigen personenbezogenen Felder inkl. Bewertungswerte. **Ereignisse (`sl_events`) sind aktuell nicht Teil des Exports** — sie verbleiben ausschließlich in `localStorage` | Zusammenführung/Auswertung mehrerer Geräte nach Studienabschluss | TODO: Datenschutz prüfen | Dateisystem des Geräts (Download-Ordner), danach außerhalb der App-Kontrolle | Unbestimmt — liegt außerhalb der App | TODO: Datenschutz prüfen — vermutlich Studienleitung/Institution |
 
 ## Löschverhalten im Detail (technisch verifiziert im Code)
 
@@ -111,12 +114,16 @@ Gespeichert wird in sechs getrennten `localStorage`-Einträgen (Keys `sl_proband
   Bewertungsbogen-Einträge in `sl_bewertungen` werden dabei **nicht** automatisch mitgelöscht
   (verwaister Verweis über `sessionId` bleibt bestehen). TODO: Datenschutz prüfen.
 - **"Alle Daten löschen" (Einstellungen-Screen):** Leert `sl_probanden` (inkl. `p.sensorik`),
-  `sl_sessions` und `sl_bewertungen` sowie den Zeitstempel des letzten Exports vollständig.
-  **Nicht** betroffen
-  sind die Szenario-Konfiguration (`sl_scenarios`), die Tag-Liste (`sl_tags`) und das
+  `sl_sessions`, `sl_bewertungen` und `sl_events` sowie den Zeitstempel des letzten Exports
+  vollständig. **Nicht** betroffen
+  sind die Szenario-Konfiguration (`sl_scenarios`), die Tag-Liste (`sl_tags`), die
+  Ereignis-Kategorien (`sl_event_tags`) und das
   Geräte-/Betreuungslabel sowie der Schalter "Mehrere Teilnehmende gleichzeitig"
   (`sl_settings.deviceLabel`/`sl_settings.multiProband`) — diese gelten als reine
   App-Konfiguration ohne Personenbezug.
+- **Einzelnes Ereignis löschen (Tab „Ereignisse"):** Entfernt genau diesen Eintrag aus
+  `sl_events`, nach Sicherheitsabfrage. Es gibt keine Detail-/Bearbeiten-Ansicht für
+  Ereignisse — Korrekturen erfolgen durch Löschen + Neuanlage.
 - **"Zurücksetzen" im Tab Sensorik:** Setzt `p.sensorik = {}` für die im Dropdown gewählte
   Person (nach Sicherheitsabfrage), sodass deren Checkliste wieder leer ist. Andere Personen
   und die feste Item-Liste bleiben unverändert.
